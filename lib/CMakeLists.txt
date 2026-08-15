@@ -1,2 +1,2 @@
-﻿# TODO: make the creation of the libs
-
+﻿add_subdirectory(libOrgki)
+add_subdirectory(libOrgkiNet)
