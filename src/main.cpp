@@ -1,14 +1,16 @@
 ﻿#include <print>
-#include <QApplication>
-
-#include "Orgki/MainWindow.hpp"
+// #include <QApplication>
+//
+// #include "Orgki/MainWindow.hpp"
 
 int main(int argc, char** argv) {
-    QApplication app{argc, argv};
-    MainWindow win{};
-    std::println("Orgki or smth");
-
-    win.show();
-
-    return app.exec();
+    // QApplication app{argc, argv};
+    // MainWindow win{};
+    // std::println("Orgki or smth");
+    //
+    // win.show();
+    //
+    // return app.exec();
+    
+    std::println("lost a week bc of mistakenly putting discard in the commit instead of reset");
 }
