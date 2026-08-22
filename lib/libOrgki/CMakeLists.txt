@@ -1,5 +1,7 @@
 ﻿set(libOrgki_SOURCES
     "${PROJECT_SOURCE_DIR}/lib/libOrgki/Plan.cpp"
+    "${PROJECT_SOURCE_DIR}/lib/libOrgki/Table.cpp"
+    "${PROJECT_SOURCE_DIR}/lib/libOrgki/Time/Time.cpp"
 )
 
 add_library(libOrgki
