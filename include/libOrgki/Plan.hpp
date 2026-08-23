@@ -18,6 +18,8 @@ public:
     Table& GetTable(TableID id);
     void SetTable(TableID id, Table& newTable);
     bool TableExists(TableID id) { return m_Tables.contains(id); }
+    size_t GetTableCount() { return m_Tables.size(); }
+    std::map<TableID, Table>& GetTables() { return m_Tables; };
 
     void CreateActivity(Activity& act);
     void CreateActivity(const std::string& name, const std::string& desc = "", bool isDynamic = false);
@@ -25,12 +27,9 @@ public:
     Activity& GetActivity(ActivityID id);
     void SetActivity(ActivityID id, Activity& newAct);
     bool ActivityExists(ActivityID id) { return m_Activities.contains(id); }
+    size_t GetActivityCount() { return m_Activities.size(); }
+    std::map<ActivityID, Activity>& GetActivities() { return m_Activities; };
 
     void AddActivityToTable(TableID tableID, ActivityID actID, TimeRange range);
-
-    size_t GetActivityCount() { return m_Activities.size(); }
-
-    size_t GetTableCount() { return m_Tables.size(); }
-    std::map<TableID, Table>& GetTables() { return m_Tables; };
 };
 
