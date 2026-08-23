@@ -1,6 +1,7 @@
 #include "Orgki/Helpers/Time.hpp"
 #include "libOrgki/Time/TimeRange.hpp"
 #include <algorithm>
+#include <format>
 
 namespace {
 size_t findClosestToMiddle(const std::string& str, char target) {
@@ -125,6 +126,17 @@ Time Helper::StringToTime(const std::string str, bool monthFirst) {
     };
 }
 
+std::string Helper::TimeToString(const Time time) {
+    return std::format("{}/{}/{}+{}:{}:{}",
+        time.m_DayNumber,
+        static_cast<unsigned int>(time.m_Month),
+        time.m_Year,
+        time.m_Hour,
+        time.m_Minute,
+        time.m_Seconds
+    );
+}
+
 TimeRange Helper::StringToTimeRange(const std::string str, bool monthFirst) {
     if (!str.contains('-')) return {};
 
@@ -138,4 +150,8 @@ TimeRange Helper::StringToTimeRange(const std::string str, bool monthFirst) {
         .m_FirstPoint = t1,
         .m_LastPoint = t2
     };
+}
+
+std::string Helper::TimeRangeToString(const TimeRange timeRange) {
+    return std::format("{} - {}", TimeToString(timeRange.m_FirstPoint), TimeToString(timeRange.m_FirstPoint));
 }
