@@ -30,16 +30,21 @@ if(MSVC)
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>")
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
     add_compile_options("$<$<COMPILE_LANGUAGE:C>:/utf-8>")
+else()
+    target_link_libraries(Orgki
+        PRIVATE
+            stdc++exp
+    )
 endif()
 
 target_link_libraries(Orgki
     PRIVATE
-    # stdc++exp
-    Orgki::libOrgki
-    # Orgki::libOrgkiNet
-    # Qt6::Gui
-    # Qt6::Widgets
+        Orgki::libOrgki
+        # Orgki::libOrgkiNet
+        # Qt6::Gui
+        # Qt6::Widgets
 )
+
 
 target_include_directories(Orgki
     PRIVATE
