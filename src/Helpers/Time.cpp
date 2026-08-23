@@ -127,7 +127,7 @@ Time Helper::StringToTime(const std::string str, bool monthFirst) {
 }
 
 std::string Helper::TimeToString(const Time time) {
-    return std::format("{}/{}/{}+{}:{}:{}",
+    return std::format("{:02}/{:02}/{:02}+{:02}:{:02}:{:02}",
         time.m_DayNumber,
         static_cast<unsigned int>(time.m_Month),
         time.m_Year,
