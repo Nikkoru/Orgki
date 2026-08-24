@@ -1,11 +1,16 @@
 ﻿#include "Orgki/Helpers/Time.hpp"
 #include "libOrgki/Plan.hpp"
 #include "libOrgki/Time/TimeRange.hpp"
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/component_base.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <functional>
 #include <iostream>
 #include <print>
 #include <string>
 #include <vector>
+#include <ftxui/ftxui.hpp>
+
 // #include <QApplication>
 //
 // #include "Orgki/MainWindow.hpp"
@@ -45,6 +50,9 @@ int main(int argc, char** argv) {
     //
     // return app.exec();
     
+    auto screen = ftxui::App::TerminalOutput();
+
+#if false
     std::println("lost a week bc of mistakenly putting discard in the commit instead of reset");
 
     std::string cmd{};
@@ -56,6 +64,29 @@ int main(int argc, char** argv) {
         if (parseCommand(cmd))
             break;
     }
+#endif
+    std::string cmd{};
+
+    auto option = ftxui::InputOption{};
+    option.multiline = false;
+    option.on_enter = [&] () {
+        parseCommand(cmd);
+        cmd.erase();
+    };
+
+    auto input = ftxui::Input(&cmd, "cmd", option);
+
+    auto components = ftxui::Container::Vertical({
+        input
+    });
+
+    auto renderer = ftxui::Renderer(components, [&]() {
+        return ftxui::vbox({
+            ftxui::hbox({ftxui::text(">> "), input->Render()}),
+        });
+    });
+
+    screen.Loop(renderer);
 }
 
 struct CMD {

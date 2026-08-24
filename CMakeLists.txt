@@ -39,6 +39,7 @@ endif()
 
 target_link_libraries(Orgki
     PRIVATE
+        ftxui::ftxui
         Orgki::libOrgki
         # Orgki::libOrgkiNet
         # Qt6::Gui
