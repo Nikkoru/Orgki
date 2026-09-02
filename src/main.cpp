@@ -9,7 +9,6 @@
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/loop.hpp>
 #include <ftxui/dom/elements.hpp>
-#include <functional>
 #include <iostream>
 #include <print>
 #include <string>
@@ -42,27 +41,27 @@ const std::string ASCII_CYAN_BG     { "\x1b[46m" };
 const std::string ASCII_WHITE_BG    { "\x1b[47m" };
 const std::string ASCII_GRAY_BG     { "\x1b[48;5;238m" };
 
-void helpCallback(std::vector<std::string>& args);
+Command::StatusData helpCallback(std::vector<std::string>& args);
 
-void createTableCallback(std::vector<std::string>& args);
+Command::StatusData createTableCallback(std::vector<std::string>& args);
 
-void seeTablesCallback(std::vector<std::string>& args);
+Command::StatusData seeTablesCallback(std::vector<std::string>& args);
 
-void editTableCallback(std::vector<std::string>& args);
+Command::StatusData editTableCallback(std::vector<std::string>& args);
 
-void getTableCallback(std::vector<std::string>& args);
+Command::StatusData getTableCallback(std::vector<std::string>& args);
 
-void addActivityToTableCallback(std::vector<std::string>& args);
+Command::StatusData addActivityToTableCallback(std::vector<std::string>& args);
 
-void createActivityCallback(std::vector<std::string>& args);
+Command::StatusData createActivityCallback(std::vector<std::string>& args);
 
-void seeActivitiesCallback(std::vector<std::string>& args);
+Command::StatusData seeActivitiesCallback(std::vector<std::string>& args);
 
-void editActivityCallback(std::vector<std::string>& args);
+Command::StatusData editActivityCallback(std::vector<std::string>& args);
 
-void getActivityCallback(std::vector<std::string>& args);
+Command::StatusData getActivityCallback(std::vector<std::string>& args);
 
-void whatOnCallback(std::vector<std::string>& args);
+Command::StatusData whatOnCallback(std::vector<std::string>& args);
 
 Plan embededPlan{};
 Parser parser{};
@@ -86,60 +85,80 @@ int main(int argc, char** argv) {
             .command = "help",
             .description = "Shows this or details about the provided command",
             .usage = "<CMD>",
+            .minArgs = 0,
+            .maxArgs = 1,
             .callback = helpCallback
         },
         {
             .command = "createTable",
             .description = "",
             .usage = "[NAME]",
+            .minArgs = 1,
+            .maxArgs = 1,
             .callback = createTableCallback
         },
         {
             .command = "seeTables",
             .description = "",
             .usage = "",
+            .minArgs = 0,
+            .maxArgs = 0,
             .callback = seeTablesCallback
         },
         {
             .command = "editTable",
             .description = "",
             .usage = "[ID] [ATTRIBUTE] <VALUE>",
+            .minArgs = 2,
+            .maxArgs = 3,
             .callback = editTableCallback
         },
         {
             .command = "getTable",
             .description = "",
             .usage = "[ID]",
+            .minArgs = 1,
+            .maxArgs = 1,
             .callback = getTableCallback
         },
         {
             .command = "addActivityToTable",
             .description = "[ACTIVITY_ID] [TABLE_ID] <TIME_RANGE>",
             .usage = "",
+            .minArgs = 2,
+            .maxArgs = 3,
             .callback = addActivityToTableCallback
         },
         {
             .command = "seeActivities",
             .description = "",
             .usage = "",
+            .minArgs = 0,
+            .maxArgs = 0,
             .callback = seeActivitiesCallback
         },
         {
             .command = "createActivity",
             .description = "",
             .usage = "[NAME] <DESCRIPTION> <\"dynamic\">",
+            .minArgs = 1,
+            .maxArgs = 3,
             .callback = createActivityCallback
         },
         {
             .command = "editActivity",
             .description = "",
             .usage = "[ID] [ATTRIBUTE] <VALUE>",
+            .minArgs = 2,
+            .maxArgs = 3,
             .callback = editActivityCallback
         },
         {
             .command = "whatOn",
             .description = "WIP",
             .usage = "[TIME / TIME_RANGE] <TABLE>",
+            .minArgs = 1,
+            .maxArgs = 2,
             .callback = whatOnCallback
         },
     });
@@ -151,9 +170,18 @@ int main(int argc, char** argv) {
         std::print("{}>> {}", ASCII_BLUE_FG, ASCII_RESET);
         std::getline(std::cin, cmd);
 
-        if (auto status = parser.Parse(cmd); status != Parser::Status::OK)
-            if (status == Parser::Status::REQUEST_EXIT)
+        if (auto status = parser.Parse(cmd); !status.has_value()) {
+            std::println("Parser returned: {}", Parser::StatusToString(status.error()));
+            if (status.error() == Parser::Status::REQUEST_EXIT)
                 break;
+            else if (status.error() == Parser::Status::NO_COMMAND_FOUND) {
+                std::println("{} command not found{}", ASCII_RED_FG, ASCII_RESET);
+            }
+        }
+        else {
+            std::println("Command returned: {}", Parser::StatusToString(status.value().status));
+            std::println("Message: {}", status.value().msg);
+        }
     }
 #else
     std::string cmd{};
@@ -243,51 +271,45 @@ int main(int argc, char** argv) {
 #endif
 }
 
-void helpCallback(std::vector<std::string>& args);
+Command::StatusData helpCallback(std::vector<std::string>& args);
 
-void createTableCallback(std::vector<std::string>& args) {
-    if (args.size() == 1) {
-        embededPlan.AddTable(args[0]);
-        std::println("{}created table {}\"{}\"", ASCII_GREEN_FG, ASCII_RESET, args[0]);
-    }
-    else if (args.empty())
-        std::println("{}less arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-    else
-        std::println("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
+Command::StatusData createTableCallback(std::vector<std::string>& args) {
+    embededPlan.AddTable(args[0]);
+    return {
+        .msg = std::format("{}created table {}\"{}\"", ASCII_GREEN_FG, ASCII_RESET, args[0]),
+        .status = Command::Status::OK
+    };
+
 }
 
-void seeTablesCallback(std::vector<std::string>& args) {
-    if (!args.empty()) {
-        std::println("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-        return;
-    }
-
+Command::StatusData seeTablesCallback(std::vector<std::string>& args) {
     std::println("Tables: {}{}{}", ASCII_MAGENTA_FG, embededPlan.GetTableCount(), ASCII_RESET);
     for (const auto& [id, table] : embededPlan.GetTables()) {
         std::print("{}ID: {}{} ", ASCII_GRAY_FG, id, ASCII_RESET);
         std::println("{}{}{}", ASCII_MAGENTA_FG, table.GetTableName(), ASCII_RESET);
         std::println("  {}{} {}{}", ASCII_CYAN_FG, table.GetActivityCount(), ASCII_RESET, (table.GetActivityCount() == 0 || table.GetActivityCount() > 1) ? "Activities" : "Activity");
     }
+    return {
+        .msg = "",
+        .status = Command::Status::OK
+    };
 }
 
-void editTableCallback(std::vector<std::string>& args) {
-
+Command::StatusData editTableCallback(std::vector<std::string>& args) {
+    return {
+        .msg = "Not implemented",
+        .status = Command::Status::FAILED
+    };
 }
 
-void getTableCallback(std::vector<std::string>& args) {
-    if (args.empty()) {
-        std::println("{}less arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-        return;
-    }
-    else if (args.size() > 1) {
-        std::println("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-        return;
-    }
-
+Command::StatusData getTableCallback(std::vector<std::string>& args) {
     auto tableID = std::stoi(args[0]);
     if (!embededPlan.TableExists(tableID)) {
-        std::println("{}invalid ID:{} {}", ASCII_RED_FG, ASCII_RESET, tableID);
-        return;
+        std::println();
+        return {
+            .msg = std::format("{}invalid ID:{} {}", ASCII_RED_FG, ASCII_RESET, tableID),
+            .status = Command::Status::INVALID_ARGS 
+        };
     }
 
     auto table = embededPlan.GetTable(tableID);
@@ -307,28 +329,28 @@ void getTableCallback(std::vector<std::string>& args) {
         std::print("{}{} {}-> {}", ASCII_MAGENTA_FG, act.GetActivityName(), ASCII_WHITE_FG, act.GetActivityDescription());
         std::println("{}", ASCII_RESET);
     }
+
+    return {
+        .msg = "",
+        .status = Command::Status::OK
+    };
 }
 
-void addActivityToTableCallback(std::vector<std::string>& args) {
-    if (args.size() > 3) {
-        std::println("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-        return;
-    }
-    else if (args.empty()) {
-        std::println("{}less arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-        return;
-    }
-
+Command::StatusData addActivityToTableCallback(std::vector<std::string>& args) {
     auto actID = std::stoi(args[0]);
     auto tableID = std::stoi(args[1]);
 
     if (!embededPlan.ActivityExists(actID)) {
-        std::println("{}provided ActivityID is not valid:{} {}", ASCII_RED_FG, ASCII_RESET, actID);
-        return;
+        return {
+            .msg = std::format("{}provided ActivityID is not valid:{} {}", ASCII_RED_FG, ASCII_RESET, actID),
+            .status = Command::Status::INVALID_ARGS
+        };
     }
     if (!embededPlan.TableExists(tableID)) {
-        std::println("{}provided TableID is not valid:{} {}", ASCII_RED_FG, ASCII_RESET, tableID);
-        return;
+        return {
+            .msg = std::format("{}provided TableID is not valid:{} {}", ASCII_RED_FG, ASCII_RESET, tableID),
+            .status = Command::Status::INVALID_ARGS
+        };
     }
 
     const auto& act = embededPlan.GetActivity(actID);
@@ -336,8 +358,10 @@ void addActivityToTableCallback(std::vector<std::string>& args) {
     TimeRange range{};
 
     if (!act.IsDynamic() && args.size() < 3) {
-        std::println("{}timerange missing{}", ASCII_RED_FG, ASCII_RESET);
-        return;
+        return {
+            .msg = std::format("{}timerange missing{}", ASCII_RED_FG, ASCII_RESET),
+            .status = Command::Status::MISSING_ARGS
+        };
     }
     else if (!act.IsDynamic()) {
         range = Helper::StringToTimeRange(args[2]);
@@ -345,45 +369,39 @@ void addActivityToTableCallback(std::vector<std::string>& args) {
 
     embededPlan.AddActivityToTable(tableID, actID, range);
 
-    std::println("{}Successfully added activity {}\"{}\" {}(ID : {}){} to table {}\"{}\" {}(ID: {}){}",
-        ASCII_GREEN_FG, 
-        ASCII_RESET, 
-        act.GetActivityName(), 
-        ASCII_GRAY_FG, 
-        actID, 
-        ASCII_GREEN_FG, 
-        ASCII_RESET, 
-        table.GetTableName(),
-        ASCII_GRAY_FG,
-        tableID,
-        ASCII_RESET
-    );
+    return {
+    .msg = std::format("{}Successfully added activity {}\"{}\" {}(ID : {}){} to table {}\"{}\" {}(ID: {}){}",
+            ASCII_GREEN_FG, 
+            ASCII_RESET, 
+            act.GetActivityName(), 
+            ASCII_GRAY_FG, 
+            actID, 
+            ASCII_GREEN_FG, 
+            ASCII_RESET, 
+            table.GetTableName(),
+            ASCII_GRAY_FG,
+            tableID,
+            ASCII_RESET
+        ),
+    .status = Command::Status::OK
+    };
 }
 
-void seeActivitiesCallback(std::vector<std::string>& args) {
-    if (!args.empty()) {
-        std::println("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-        return;
-    }
-
+Command::StatusData seeActivitiesCallback(std::vector<std::string>& args) {
     std::println("Activities: {}{}{}", ASCII_MAGENTA_FG, embededPlan.GetActivityCount(), ASCII_RESET);
     for (const auto& [id, act] : embededPlan.GetActivities()) {
         std::print("{}ID: {} ", ASCII_GRAY_FG, id);
         std::println("{}{}{} {}", ASCII_MAGENTA_FG, act.GetActivityName(), ASCII_WHITE_FG, (act.IsDynamic()) ? ASCII_YELLOW_FG + "[DYNAMIC]" + ASCII_WHITE_FG : "");
         std::println("  {}", act.GetActivityDescription().empty() ? "no description" : std::format("\"{}\"", act.GetActivityDescription()), ASCII_RESET);
     }
+
+    return {
+        .msg = "",
+        .status = Command::Status::OK
+    };
 }
 
-void createActivityCallback(std::vector<std::string>& args) {
-    if (args.size() > 3) {
-        std::println("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-        return;
-    }
-    else if (args.empty()) {
-        std::println("{}less arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-        return;
-    }
-
+Command::StatusData createActivityCallback(std::vector<std::string>& args) {
     auto name = args[0];
     std::string desc{};
     bool dynamic = false;
@@ -394,84 +412,106 @@ void createActivityCallback(std::vector<std::string>& args) {
         dynamic = true;
 
     embededPlan.CreateActivity(name, desc, dynamic);
-    std::println("{}Successfully created Activity {}\"{}\"", ASCII_GREEN_FG, ASCII_RESET, name);
+    return {
+        .msg = std::format("{}Successfully created Activity {}\"{}\"", ASCII_GREEN_FG, ASCII_RESET, name),
+        .status = Command::Status::OK
+    };
 }
 
-void editActivityCallback(std::vector<std::string>& args) {
-    if (args.size() > 3) {
-        std::println("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-        return;
-    }
-    else if (args.empty()) {
-        std::println("{}less arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-        return;
-    }
+Command::StatusData editActivityCallback(std::vector<std::string>& args) {
     auto actID = std::stoi(args[0]);
     auto attr = args[1];
 
     if (!embededPlan.ActivityExists(actID)) {
-        std::println("{}invalid ID:{} {}", ASCII_RED_FG, ASCII_RESET, actID);
-        return;
+        return {
+            .msg = std::format("{}invalid ID:{} {}", ASCII_RED_FG, ASCII_RESET, actID),
+            .status = Command::Status::INVALID_ARGS
+        };
     }
 
     auto& act = embededPlan.GetActivity(actID);
 
     if (attr == "name") {
         if (args.size() == 3) {
-            std::println("{}Set Activity {}\"{}\"{} name to {}\"{}\"", ASCII_GREEN_FG, ASCII_RESET, act.GetActivityName(), ASCII_GREEN_FG, ASCII_RESET, args[2]);
             act.SetActivityName(args[2]);
+            return {
+                .msg = std::format("{}Set Activity {}\"{}\"{} name to {}\"{}\"", ASCII_GREEN_FG, ASCII_RESET, act.GetActivityName(), ASCII_GREEN_FG, ASCII_RESET, args[2]),
+                .status = Command::Status::OK
+            };
         }
         else {
-            std::println("{}missing value{}", ASCII_RED_FG, ASCII_RESET);
-            return;
+            return {
+                .msg = std::format("{}missing value{}", ASCII_RED_FG, ASCII_RESET),
+                .status = Command::Status::MISSING_ARGS
+            };
         }
     }
     else if (std::string{"description"}.substr(0, attr.size()) == attr) {
         if (args.size() == 3) {
             act.SetActivityDescription(args[2]);
-            std::println("{}Set Activity {}\"{}\"{} description to {}\"{}\"", ASCII_GREEN_FG, ASCII_RESET, act.GetActivityName(), ASCII_GREEN_FG, ASCII_RESET, args[2]);
+            return {
+                .msg = std::format("{}Set Activity {}\"{}\"{} description to {}\"{}\"", ASCII_GREEN_FG, ASCII_RESET, act.GetActivityName(), ASCII_GREEN_FG, ASCII_RESET, args[2]),
+                .status = Command::Status::OK
+            };
         }
         else {
-            std::println("{}missing value{}", ASCII_RED_FG, ASCII_RESET);
-            return;
+            return {
+                .msg = std::format("{}missing value{}", ASCII_RED_FG, ASCII_RESET),
+                .status = Command::Status::OK
+            };
         }
     }
     else if (attr == "dynamic") {
         if (args.size() >= 3) {
-            std::println("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-            return;
+            return {
+                .msg = std::format("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET),
+                .status = Command::Status::TOO_MANY_ARGS
+            };
         }
         
         act.SetDynamic(true);
-        std::println("{}Set Activity {}\"{}\"{} to {}Dynamic{}", ASCII_GREEN_FG, ASCII_RESET, act.GetActivityName(), ASCII_GREEN_FG, ASCII_YELLOW_FG, ASCII_RESET);
+        return {
+            .msg = std::format("{}Set Activity {}\"{}\"{} to {}Dynamic{}", ASCII_GREEN_FG, ASCII_RESET, act.GetActivityName(), ASCII_GREEN_FG, ASCII_YELLOW_FG, ASCII_RESET),
+            .status = Command::Status::OK
+        };
     }
     else if (attr == "noDynamic") {
         if (args.size() >= 3) {
-            std::println("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-            return;
+            return {
+                .msg = std::format("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET),
+                .status = Command::Status::TOO_MANY_ARGS
+            };
         }
         
         act.SetDynamic(false);
-        std::println("{}Set Activity {}\"{}\"{} to {}Not Dynamic{}", ASCII_GREEN_FG, ASCII_RESET, act.GetActivityName(), ASCII_GREEN_FG, ASCII_RED_FG, ASCII_RESET);
+        return {
+            .msg = std::format("{}Set Activity {}\"{}\"{} to {}Not Dynamic{}", ASCII_GREEN_FG, ASCII_RESET, act.GetActivityName(), ASCII_GREEN_FG, ASCII_RED_FG, ASCII_RESET),
+            .status = Command::Status::OK
+        };
     }
     else {
-        std::println("{}attribute {}\"{}\"{} is not valid{}", ASCII_RED_FG, ASCII_RESET, attr, ASCII_RED_FG, ASCII_RESET);
+        return {
+            .msg = std::format("{}attribute {}\"{}\"{} is not valid{}", ASCII_RED_FG, ASCII_RESET, attr, ASCII_RED_FG, ASCII_RESET),
+            .status = Command::Status::INVALID_ARGS
+        };
     }
 }
 
-void getActivityCallback(std::vector<std::string>& args) {
-
+Command::StatusData getActivityCallback(std::vector<std::string>& args) {
+    return {
+        .msg = "Not implemented",
+        .status = Command::Status::FAILED
+    };
 }
 
-void whatOnCallback(std::vector<std::string>& args) {
-
+Command::StatusData whatOnCallback(std::vector<std::string>& args) {
+    return {
+        .msg = "Not implemented",
+        .status = Command::Status::FAILED
+    };
 }
 
-void helpCallback(std::vector<std::string>& args) {
-    if (args.size() > 1) {
-        std::println("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
-    }
-
+Command::StatusData helpCallback(std::vector<std::string>& args) {
     for (const auto& cmd : parser.GetCommands()) {
         if (args.size() == 1) {
             if (cmd.command == args[0]) {
@@ -479,11 +519,18 @@ void helpCallback(std::vector<std::string>& args) {
                 std::println("      {}", cmd.description.empty() ? "no desc" : cmd.description);
                 std::println("  USAGE:");
                 std::println("      {} {}", cmd.command, cmd.usage);
-                return;
+                return { 
+                    .msg = "",
+                    .status = Command::Status::OK
+                };
             }
         }
         else {
             std::println("{}{} \x1b[3m{}{}{}", ASCII_MAGENTA_FG, cmd.command, ASCII_GRAY_FG, cmd.usage, ASCII_RESET);
         }
     }
+    return { 
+        .msg = "",
+        .status = Command::Status::OK
+    };
 }

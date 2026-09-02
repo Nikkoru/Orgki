@@ -9,12 +9,16 @@ std::string Parser::StatusToString(Status s) {
     switch (s) {
     default:
         return "Unknown";
+    case Status::REQUEST_EXIT:
+        return "REQUEST_EXIT";
     case Status::ILL_FORMAT:
         return "ILL_FORMAT";
     case Status::OK:
         return "OK";
-    case Status::NO_COMMAND:
-        return "NO_COMMAND";
+    case Status::NO_COMMAND_FOUND:
+        return "NO_COMMAND_FOUND";
+    case Status::BUFFER_EMPTY:
+        return "BUFFER_EMPTY";
     case Status::TOO_LITTLE_ARGS:
         return "TOO_LITTLE_ARGS";
     case Status::TOO_MANY_ARGS:
@@ -25,9 +29,23 @@ std::string Parser::StatusToString(Status s) {
         return "COMMAND_MISSING_CALLBACK";
     }
 }
+std::string Parser::StatusToString(Command::Status s) {
+    switch (s) {
+    case Command::Status::OK:
+        return "OK";
+    case Command::Status::INVALID_ARGS:
+        return "INVALID_ARGS";
+    case Command::Status::FAILED:
+        return "FAILED";
+    case Command::Status::MISSING_ARGS:
+        return "MISSING_ARGS";
+    case Command::Status::TOO_MANY_ARGS:
+        return "TOO_MANY_ARGS";
+    }
+}
 
-Parser::Status Parser::Parse(std::string cmd) {
-    if (cmd.empty()) return Status::NO_COMMAND;
+std::expected<Command::StatusData, Parser::Status> Parser::Parse(std::string cmd) {
+    if (cmd.empty()) return std::unexpected(Status::BUFFER_EMPTY);
 
     auto tokens = cmd | std::views::split(' ');
     std::string activeCmd{};
@@ -45,11 +63,13 @@ Parser::Status Parser::Parse(std::string cmd) {
         }
         else if (activeCmd.empty()) {
             if (str.contains('\"')) 
-                return Status::ILL_FORMAT;
+                return std::unexpected(Status::ILL_FORMAT);
             else 
                 activeCmd = str;
-            if (!m_Cmds.contains(activeCmd))
-                return Status::NO_COMMAND;
+            if (activeCmd == "exit")
+                return std::unexpected(Status::REQUEST_EXIT);
+            else if (!m_Cmds.contains(activeCmd))
+                return std::unexpected(Status::NO_COMMAND_FOUND);
         }
         else {
             if (str.contains('\"')) {
@@ -80,9 +100,12 @@ Parser::Status Parser::Parse(std::string cmd) {
         }
     }
 
-    m_Cmds.at(activeCmd).callback(args);
+    if (args.size() > m_Cmds.at(activeCmd).maxArgs)
+        return std::unexpected(Status::TOO_MANY_ARGS);
+    if (args.size() < m_Cmds.at(activeCmd).minArgs)
+        return std::unexpected(Status::TOO_LITTLE_ARGS);
 
-    return Status::OK;
+    return m_Cmds.at(activeCmd).callback(args);
 }
 
 Parser::Status Parser::AddCommand(Command cmd) {

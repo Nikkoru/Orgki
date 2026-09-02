@@ -17,7 +17,8 @@ public:
         REQUEST_EXIT,
 
         ILL_FORMAT,
-        NO_COMMAND,
+        NO_COMMAND_FOUND,
+        BUFFER_EMPTY,
         TOO_MANY_ARGS,
         TOO_LITTLE_ARGS,
 
@@ -26,8 +27,9 @@ public:
     };
 
     static std::string StatusToString(Status s);
+    static std::string StatusToString(Command::Status s);
 
-    Status Parse(std::string cmd);
+    std::expected<Command::StatusData, Status> Parse(std::string cmd);
     Status AddCommand(Command cmd);
     std::pair<Status, std::string> AddCommandBulk(std::vector<Command> cmds);
 
