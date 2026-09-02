@@ -1,8 +1,13 @@
 ﻿#include "Orgki/Helpers/Time.hpp"
+#include "libOrgki/Commands/Command.hpp"
+#include "libOrgki/Commands/Parser.hpp"
 #include "libOrgki/Plan.hpp"
 #include "libOrgki/Time/TimeRange.hpp"
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component_options.hpp>
+#include <ftxui/component/event.hpp>
+#include <ftxui/component/loop.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <functional>
 #include <iostream>
@@ -37,9 +42,30 @@ const std::string ASCII_CYAN_BG     { "\x1b[46m" };
 const std::string ASCII_WHITE_BG    { "\x1b[47m" };
 const std::string ASCII_GRAY_BG     { "\x1b[48;5;238m" };
 
-bool parseCommand(std::string cmd);
+void helpCallback(std::vector<std::string>& args);
+
+void createTableCallback(std::vector<std::string>& args);
+
+void seeTablesCallback(std::vector<std::string>& args);
+
+void editTableCallback(std::vector<std::string>& args);
+
+void getTableCallback(std::vector<std::string>& args);
+
+void addActivityToTableCallback(std::vector<std::string>& args);
+
+void createActivityCallback(std::vector<std::string>& args);
+
+void seeActivitiesCallback(std::vector<std::string>& args);
+
+void editActivityCallback(std::vector<std::string>& args);
+
+void getActivityCallback(std::vector<std::string>& args);
+
+void whatOnCallback(std::vector<std::string>& args);
 
 Plan embededPlan{};
+Parser parser{};
 
 int main(int argc, char** argv) {
     // QApplication app{argc, argv};
@@ -50,10 +76,73 @@ int main(int argc, char** argv) {
     //
     // return app.exec();
     
-    auto screen = ftxui::App::TerminalOutput();
+    // auto screen = ftxui::App::Fullscreen();
 
-#if false
+#if true
     std::println("lost a week bc of mistakenly putting discard in the commit instead of reset");
+    
+    parser.AddCommandBulk({
+        {
+            .command = "help",
+            .description = "Shows this or details about the provided command",
+            .usage = "<CMD>",
+            .callback = helpCallback
+        },
+        {
+            .command = "createTable",
+            .description = "",
+            .usage = "[NAME]",
+            .callback = createTableCallback
+        },
+        {
+            .command = "seeTables",
+            .description = "",
+            .usage = "",
+            .callback = seeTablesCallback
+        },
+        {
+            .command = "editTable",
+            .description = "",
+            .usage = "[ID] [ATTRIBUTE] <VALUE>",
+            .callback = editTableCallback
+        },
+        {
+            .command = "getTable",
+            .description = "",
+            .usage = "[ID]",
+            .callback = getTableCallback
+        },
+        {
+            .command = "addActivityToTable",
+            .description = "[ACTIVITY_ID] [TABLE_ID] <TIME_RANGE>",
+            .usage = "",
+            .callback = addActivityToTableCallback
+        },
+        {
+            .command = "seeActivities",
+            .description = "",
+            .usage = "",
+            .callback = seeActivitiesCallback
+        },
+        {
+            .command = "createActivity",
+            .description = "",
+            .usage = "[NAME] <DESCRIPTION> <\"dynamic\">",
+            .callback = createActivityCallback
+        },
+        {
+            .command = "editActivity",
+            .description = "",
+            .usage = "[ID] [ATTRIBUTE] <VALUE>",
+            .callback = editActivityCallback
+        },
+        {
+            .command = "whatOn",
+            .description = "WIP",
+            .usage = "[TIME / TIME_RANGE] <TABLE>",
+            .callback = whatOnCallback
+        },
+    });
 
     std::string cmd{};
     while (true) {
@@ -61,40 +150,98 @@ int main(int argc, char** argv) {
         std::println("{}cli stuff{}", ASCII_GRAY_FG, ASCII_RESET);
         std::print("{}>> {}", ASCII_BLUE_FG, ASCII_RESET);
         std::getline(std::cin, cmd);
-        if (parseCommand(cmd))
-            break;
+
+        if (auto status = parser.Parse(cmd); status != Parser::Status::OK)
+            if (status == Parser::Status::REQUEST_EXIT)
+                break;
     }
-#endif
+#else
     std::string cmd{};
 
     auto option = ftxui::InputOption{};
     option.multiline = false;
     option.on_enter = [&] () {
-        parseCommand(cmd);
-        cmd.erase();
+        if (parseCommand(cmd))
+            screen.Exit();
+        else
+            cmd.erase();
     };
 
-    auto input = ftxui::Input(&cmd, "cmd", option);
+    bool showCmd = false;
 
-    auto components = ftxui::Container::Vertical({
-        input
-    });
-
-    auto renderer = ftxui::Renderer(components, [&]() {
-        return ftxui::vbox({
-            ftxui::hbox({ftxui::text(">> "), input->Render()}),
+    auto input = ftxui::Input(&cmd, "", option);
+    auto inputRenderer = ftxui::Renderer(input, [&]() {
+        return ftxui::hbox({
+            ftxui::text(">> "),
+            input->Render(),
         });
+    }) | ftxui::Maybe(&showCmd);
+    auto button = ftxui::Renderer([&]() {
+            return ftxui::text("Exit");
+    });
+    button |= ftxui::CatchEvent([&](ftxui::Event event) -> bool {
+        if (
+            event == ftxui::Event::Return || 
+            (event.mouse().button == ftxui::Mouse::Left && button->Active())
+        ) {
+            screen.Exit();
+        }
+        return true;
+    });
+    
+    // auto buttonOpt = ftxui::ButtonOption::Simple();
+    // auto button = ftxui::Button("Quit", [&] { screen.Exit(); }, buttonOpt) | ftxui::center;
+
+    // ftxui::Components components{ 
+    //     input,
+    //     button
+   // };
+    // ftxui::Elements elements{ ftxui::text(">> ") };
+    //
+    // auto createDocument = [&] () -> ftxui::Element {
+    //
+    //     return ftxui::hbox(elements);
+    // };
+    //
+    auto layout = ftxui::Container::Vertical({
+        ftxui::Container::Horizontal({
+            inputRenderer,
+        }),
+        button
     });
 
-    screen.Loop(renderer);
-}
+    auto mainComponent = ftxui::Renderer(layout, [&]() { 
+        return ftxui::vbox({
+            inputRenderer->Render(),
+            button->Render()
+        }); 
+    });
 
-struct CMD {
-    std::string cmd{};
-    std::string desc{};
-    std::string usage{};
-    std::function<void(std::vector<std::string>&)> callback;
-};
+    mainComponent |= ftxui::CatchEvent([&](ftxui::Event event) -> bool {
+        if (event == ftxui::Event::Character('c') && !input->Focused()) {
+            showCmd = !showCmd;
+            return true;
+        }
+        return false;
+    });
+
+    // auto updateState = [&] () -> ftxui::Component {
+    //
+    // };
+
+    auto mainRenderer = ftxui::Renderer(mainComponent, [&]() {
+        return mainComponent->Render();
+    });
+
+    ftxui::Loop loop{&screen, mainRenderer};
+
+    while (!loop.HasQuitted()) {
+        // mainComponent = updateState();
+        // screen.RequestAnimationFrame();
+        loop.RunOnce();
+    }
+#endif
+}
 
 void helpCallback(std::vector<std::string>& args);
 
@@ -320,142 +467,23 @@ void whatOnCallback(std::vector<std::string>& args) {
 
 }
 
-
-std::vector<CMD> cmds {
-    CMD {
-        .cmd = "help",
-        .desc = "Shows this or details about the provided command",
-        .usage = "<CMD>",
-        .callback = helpCallback
-    },
-    CMD {
-        .cmd = "createTable",
-        .desc = "",
-        .usage = "[NAME]",
-        .callback = createTableCallback
-    },
-    CMD {
-        .cmd = "seeTables",
-        .desc = "",
-        .usage = "",
-        .callback = seeTablesCallback
-    },
-    CMD {
-        .cmd = "editTable",
-        .desc = "",
-        .usage = "[ID] [ATTRIBUTE] <VALUE>",
-        .callback = editTableCallback
-    },
-    CMD {
-        .cmd = "getTable",
-        .desc = "",
-        .usage = "[ID]",
-        .callback = getTableCallback
-    },
-    CMD {
-        .cmd = "addActivityToTable",
-        .desc = "[ACTIVITY_ID] [TABLE_ID] <TIME_RANGE>",
-        .usage = "",
-        .callback = addActivityToTableCallback
-    },
-    CMD {
-        .cmd = "seeActivities",
-        .desc = "",
-        .usage = "",
-        .callback = seeActivitiesCallback
-    },
-    CMD {
-        .cmd = "createActivity",
-        .desc = "",
-        .usage = "[NAME] <DESCRIPTION> <\"dynamic\">",
-        .callback = createActivityCallback
-    },
-    CMD {
-        .cmd = "editActivity",
-        .desc = "",
-        .usage = "[ID] [ATTRIBUTE] <VALUE>",
-        .callback = editActivityCallback
-    },
-    CMD {
-        .cmd = "whatOn",
-        .desc = "WIP",
-        .usage = "[TIME / TIME_RANGE] <TABLE>",
-        .callback = whatOnCallback
-    },
-};
-
 void helpCallback(std::vector<std::string>& args) {
     if (args.size() > 1) {
         std::println("{}more arguments than expected{}", ASCII_RED_FG, ASCII_RESET);
     }
 
-    for (const auto& cmd : cmds) {
+    for (const auto& cmd : parser.GetCommands()) {
         if (args.size() == 1) {
-            if (cmd.cmd == args[0]) {
-                std::println("  {}", cmd.cmd);
-                std::println("      {}", cmd.desc.empty() ? "no desc" : cmd.desc);
+            if (cmd.command == args[0]) {
+                std::println("  {}", cmd.command);
+                std::println("      {}", cmd.description.empty() ? "no desc" : cmd.description);
                 std::println("  USAGE:");
-                std::println("      {} {}", cmd.cmd, cmd.usage);
+                std::println("      {} {}", cmd.command, cmd.usage);
                 return;
             }
         }
         else {
-            std::println("{}{} \x1b[3m{}{}{}", ASCII_MAGENTA_FG, cmd.cmd, ASCII_GRAY_FG, cmd.usage, ASCII_RESET);
+            std::println("{}{} \x1b[3m{}{}{}", ASCII_MAGENTA_FG, cmd.command, ASCII_GRAY_FG, cmd.usage, ASCII_RESET);
         }
     }
-}
-
-
-bool parseCommand(std::string cmd) {
-    if (cmd == "exit")
-        return true;
-
-    std::string action{};
-    std::vector<std::string> args;
-    std::function<void(std::vector<std::string>&)> callback;
-
-    while (!cmd.empty()) {
-        std::string splitCmd{};
-
-        if (cmd[0] == '\"') {
-            if (action.empty()) {
-                std::println("{}the command shouldn't start with {}'\"'", ASCII_RED_FG, ASCII_RESET);
-                return false;
-            }
-            else {
-                splitCmd = cmd.substr(1, cmd.find('\"', 1) - 1);
-                cmd.erase(0, cmd.find('\"', 1) + 2);
-            }
-        }
-        else {
-            splitCmd = cmd.substr(0, cmd.find(' '));
-            if (!cmd.contains(' '))
-                cmd.erase();
-            else
-				cmd.erase(0, cmd.find(' ') + 1);
-        }
-
-        if (action.empty())
-            action = splitCmd;
-        else
-            args.emplace_back(splitCmd);
-    }
-    // std::println("{}{}{}", ASCII_MAGENTA_FG, action, ASCII_RESET);
-    // for (const auto& arg : args) {
-    //     std::println("{}{}{}", ASCII_CYAN_FG, arg, ASCII_RESET);
-    // }
-
-    for (const auto& cmdAct : cmds) {
-        if (cmdAct.cmd == action) {
-            callback = cmdAct.callback;
-        }
-    }
-
-    if (!callback)
-        std::println("{}command not found: {}\"{}\"", ASCII_RED_FG, ASCII_RESET, action);
-    else
-        callback(args);
-
-    std::print("{}", ASCII_RESET);
-    return false;
 }
