@@ -1,6 +1,12 @@
 set(libOrgki_HEADERS
     "${ORGKI_HEADERS_DIR}/libOrgki/Plan.hpp"
     "${ORGKI_HEADERS_DIR}/libOrgki/Table.hpp"
+
+    "${ORGKI_HEADERS_DIR}/libOrgki/Commands/Command.hpp"
+    "${ORGKI_HEADERS_DIR}/libOrgki/Commands/Parser.hpp"
+
+    "${ORGKI_HEADERS_DIR}/libOrgki/IO/SettingsManager.hpp"
+    
     "${ORGKI_HEADERS_DIR}/libOrgki/Time/Time.hpp"
     "${ORGKI_HEADERS_DIR}/libOrgki/Time/DayWeek.hpp"
     "${ORGKI_HEADERS_DIR}/libOrgki/Time/Month.hpp"
