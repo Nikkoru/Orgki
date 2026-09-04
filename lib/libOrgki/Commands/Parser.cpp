@@ -31,6 +31,8 @@ std::string Parser::StatusToString(Status s) {
 }
 std::string Parser::StatusToString(Command::Status s) {
     switch (s) {
+    default:
+        return "Unknown";
     case Command::Status::OK:
         return "OK";
     case Command::Status::INVALID_ARGS:
@@ -52,17 +54,15 @@ std::expected<Command::StatusData, Parser::Status> Parser::Parse(std::string cmd
     std::vector<std::string> args{};
 
     bool waitForPair = false;
+    char searchForChar{};
     std::string pair{};
 
     for (const auto& token : tokens) {
         auto str = std::string_view{ token };
-        if (str == "&") {
-            m_Cmds.at(activeCmd).callback(args);
-            args.clear();
-            activeCmd.erase();
-        }
-        else if (activeCmd.empty()) {
-            if (str.contains('\"')) 
+        if (str.empty()) continue;
+
+        if (activeCmd.empty()) {
+            if (str.contains('\"') || str.contains('\'') || str.contains('&'))
                 return std::unexpected(Status::ILL_FORMAT);
             else 
                 activeCmd = str;
@@ -71,9 +71,36 @@ std::expected<Command::StatusData, Parser::Status> Parser::Parse(std::string cmd
             else if (!m_Cmds.contains(activeCmd))
                 return std::unexpected(Status::NO_COMMAND_FOUND);
         }
+        else if (str == "&") {
+            m_Cmds.at(activeCmd).callback(args);
+            args.clear();
+            activeCmd.erase();
+        }
         else {
-            if (str.contains('\"')) {
+            if (str[0] == ('\"') || str[0] == ('\'')) {
                 if (waitForPair) {
+                    if (str.contains(searchForChar))
+						return std::unexpected(Status::ILL_FORMAT);
+
+					using namespace std::string_literals;
+					pair += " "s += str;
+					continue;
+                }
+                else if (!waitForPair) {
+                    if (str.back() == '\"' || str.back() == '\'') {
+						using namespace std::string_literals;
+						auto view = std::string_view{ str };
+						view.remove_prefix(1);
+						view.remove_suffix(1);
+						args.emplace_back(view);
+                        continue;
+                    }
+                    pair += str;
+                    searchForChar = str[0];
+                    waitForPair = true;
+                    continue;
+                }
+                else {
                     using namespace std::string_literals;
                     pair += " "s += str;
                     auto view = std::string_view{ pair };
@@ -82,10 +109,22 @@ std::expected<Command::StatusData, Parser::Status> Parser::Parse(std::string cmd
                     args.emplace_back(view);
 
                     pair.erase();
+                    waitForPair = false;
+                    continue;
                 }
-                else {
-                    pair += str;
-                    waitForPair = true;
+            }
+            else if (str.back() == '\"' || str.back() == '\'') {
+                if (!waitForPair) return std::unexpected(Status::ILL_FORMAT);
+                else if (waitForPair && str.back() == searchForChar) {
+                    using namespace std::string_literals;
+                    pair += " "s += str;
+                    auto view = std::string_view{ pair };
+                    view.remove_prefix(1);
+                    view.remove_suffix(1);
+                    args.emplace_back(view);
+
+                    pair.erase();
+                    waitForPair = false;
                     continue;
                 }
             }
