@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-
+namespace Orgki {
 struct Command {
     enum class Status {
         OK = 0,
@@ -28,3 +28,4 @@ struct Command {
     size_t maxArgs{};
     Callback callback{};
 };
+}

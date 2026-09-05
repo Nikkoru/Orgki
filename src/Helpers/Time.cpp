@@ -27,7 +27,7 @@ size_t findClosestToMiddle(const std::string& str, char target) {
 }
 }
 
-Time Helper::StringToTime(const std::string str, bool monthFirst) {
+Orgki::Time Helper::StringToTime(const std::string str, bool monthFirst) {
     std::string yearStr{};
     std::string monthStr{};
     std::string dayStr{};
@@ -118,7 +118,7 @@ Time Helper::StringToTime(const std::string str, bool monthFirst) {
 
     return {
         .m_Year = static_cast<unsigned int>(year),
-        .m_Month = static_cast<Month>(month),
+        .m_Month = static_cast<Orgki::Month>(month),
         .m_DayNumber = static_cast<unsigned int>(day),
         .m_Hour = static_cast<unsigned int>(hour),
         .m_Minute = static_cast<unsigned int>(min),
@@ -126,7 +126,7 @@ Time Helper::StringToTime(const std::string str, bool monthFirst) {
     };
 }
 
-std::string Helper::TimeToString(const Time time) {
+std::string Helper::TimeToString(const Orgki::Time time) {
     return std::format("{:02}/{:02}/{:02}+{:02}:{:02}:{:02}",
         time.m_DayNumber,
         static_cast<unsigned int>(time.m_Month),
@@ -137,7 +137,7 @@ std::string Helper::TimeToString(const Time time) {
     );
 }
 
-TimeRange Helper::StringToTimeRange(const std::string str, bool monthFirst) {
+Orgki::TimeRange Helper::StringToTimeRange(const std::string str, bool monthFirst) {
     if (!str.contains('-')) return {};
 
     auto t1Str = str.substr(0, findClosestToMiddle(str, '-'));
@@ -152,6 +152,6 @@ TimeRange Helper::StringToTimeRange(const std::string str, bool monthFirst) {
     };
 }
 
-std::string Helper::TimeRangeToString(const TimeRange timeRange) {
+std::string Helper::TimeRangeToString(const Orgki::TimeRange timeRange) {
     return std::format("{} - {}", TimeToString(timeRange.m_FirstPoint), TimeToString(timeRange.m_FirstPoint));
 }

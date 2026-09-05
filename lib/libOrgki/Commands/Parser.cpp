@@ -5,6 +5,7 @@
 #include <string_view>
 #include <vector>
 
+namespace Orgki {
 std::string Parser::StatusToString(Status s) {
     switch (s) {
     default:
@@ -175,4 +176,5 @@ std::vector<Command> Parser::GetCommands() {
         vec.emplace_back(cmd);
 
     return vec;
+}
 }

@@ -4,6 +4,7 @@
 #include <print>
 #include <stdexcept>
 
+namespace Orgki {
 void Plan::AddTable(Table& table, TableID id) {
     if (m_Tables.contains(id)) {
         std::println("ID already is taken");
@@ -77,4 +78,5 @@ void Plan::SetActivity(ActivityID id, Activity& newAct) {
 
 void Plan::AddActivityToTable(TableID tableID, ActivityID actID, TimeRange range) {
     GetTable(tableID).AddActivity(actID, range);
+}
 }

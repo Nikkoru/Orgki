@@ -1,5 +1,6 @@
 #pragma once
 
+namespace Orgki {
 enum class Day {
     Monday = 0,
     Tuesday,
@@ -9,3 +10,4 @@ enum class Day {
     Saturday,
     Sunday
 };
+}

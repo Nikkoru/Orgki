@@ -2,6 +2,7 @@
 
 #include <string>
 
+namespace Orgki {
 using ActivityID = unsigned int;
 
 class Plan;
@@ -21,3 +22,4 @@ public:
     void SetActivityDescription(std::string desc) { m_ActivityDescription = desc; }
     void SetDynamic(bool dynamic) { m_Dynamic = dynamic; }
 };
+}

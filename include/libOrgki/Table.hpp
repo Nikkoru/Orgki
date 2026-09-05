@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+namespace Orgki {
 using TableID = unsigned int;
 
 class Plan;
@@ -30,3 +31,4 @@ public:
     std::vector<std::pair<TimeRange, ActivityID>>& GetActivities() { return m_Activities; }
     std::map<Time, ActivityID> GetFormatedActivities();
 };
+}

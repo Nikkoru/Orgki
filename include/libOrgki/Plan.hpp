@@ -6,6 +6,7 @@
 #include "Table.hpp"
 #include "Activity.hpp"
 
+namespace Orgki {
 class Plan {
 private:
     std::map<TableID, Table> m_Tables;
@@ -32,4 +33,4 @@ public:
 
     void AddActivityToTable(TableID tableID, ActivityID actID, TimeRange range);
 };
-
+}

@@ -1,5 +1,6 @@
 #pragma once
 
+namespace Orgki {
 enum class Month {
     January = 0,
     Febuary,
@@ -14,3 +15,4 @@ enum class Month {
     November,
     December
 };
+}

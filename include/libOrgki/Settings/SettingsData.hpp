@@ -3,6 +3,7 @@
 #include <string>
 #include <nlohmann/json.hpp>
 
+namespace Orgki {
 class SettingsData {
 private:
     std::string m_Name;
@@ -17,3 +18,4 @@ public:
     void SetValue(const std::string& key, nlohmann::json value);
     void RemoveValue(const std::string& key);
 };
+}

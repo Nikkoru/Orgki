@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 
+namespace Orgki {
 class Parser {
 private:
     std::map<std::string, Command> m_Cmds;
@@ -35,3 +36,4 @@ public:
 
     std::vector<Command> GetCommands();
 };
+}

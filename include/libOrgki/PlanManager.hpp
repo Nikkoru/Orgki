@@ -3,7 +3,7 @@
 #include "Plan.hpp"
 class PlanManager {
 private:
-    std::vector<Plan> m_LoadedPlans;
+    std::vector<Orgki::Plan> m_LoadedPlans;
 public:
     
 };

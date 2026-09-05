@@ -6,6 +6,7 @@
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
+namespace Orgki {
 void SettingsManager::LoadSettings(const std::filesystem::path& path) {
     auto f = std::ifstream{ path };
     if (!f.is_open()) return;
@@ -80,4 +81,5 @@ void SettingsManager::SaveToDisk(const fs::path& path) {
 
 void SettingsManager::DiscardChanges() {
 
+}
 }

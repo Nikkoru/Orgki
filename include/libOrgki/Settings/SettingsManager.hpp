@@ -6,6 +6,7 @@
 
 #include "SettingsData.hpp"
 
+namespace Orgki {
 class SettingsManager {
 private:
     std::filesystem::path m_ActivePath{};
@@ -27,3 +28,4 @@ public:
     void SaveToDisk(const std::filesystem::path& path = "");
     void DiscardChanges();
 };
+}

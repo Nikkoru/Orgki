@@ -4,6 +4,7 @@
 #include "Month.hpp"
 #include <compare>
 
+namespace Orgki {
 struct Time {
     unsigned int m_Year{};
     Month m_Month{};
@@ -15,3 +16,4 @@ struct Time {
 
     std::strong_ordering operator<=>(const Time& other) const = default;
 };
+}

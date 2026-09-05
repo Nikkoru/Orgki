@@ -3,6 +3,7 @@
 
 using json = nlohmann::json;
 
+namespace Orgki {
 bool SettingsData::HasValue(const std::string& key) {
     if (m_JsonData.empty()) return false;
 
@@ -32,4 +33,5 @@ void SettingsData::RemoveValue(const std::string& key) {
     if (!HasValue(key)) return;
 
     m_JsonData.erase(key);
+}
 }
