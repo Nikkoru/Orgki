@@ -16,3 +16,12 @@ FetchContent_Declare(json
     SYSTEM
 )
 FetchContent_MakeAvailable(json)
+
+FetchContent_Declare(lua
+    GIT_REPOSITORY https://github.com/marovira/lua
+    GIT_TAG 5.5.0
+    GIT_SHALLOW ON
+    EXCLUDE_FROM_ALL
+    SYSTEM
+)
+FetchContent_MakeAvailable(lua)

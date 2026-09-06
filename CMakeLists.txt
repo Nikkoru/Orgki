@@ -48,6 +48,7 @@ endif()
 target_link_libraries(Orgki
     PRIVATE
         ftxui::ftxui
+        lua::lua
         Orgki::libOrgki
         # Orgki::libOrgkiNet
         # Qt6::Gui
