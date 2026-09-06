@@ -5,13 +5,24 @@
 #include <nlohmann/json.hpp>
 
 #include "SettingsData.hpp"
+#include "../Commands/Command.hpp"
 
 namespace Orgki {
+class Parser;
 class SettingsManager {
+private:
+    friend struct Context;
 private:
     std::filesystem::path m_ActivePath{};
     nlohmann::json m_JsonObject{};
     bool m_Loaded{};
+private:
+    Command::StatusData _AddSettingCallback(std::vector<std::string>& args);
+    Command::StatusData _SetSettingCallback(std::vector<std::string>& args);
+    Command::StatusData _RemoveSettingCallback(std::vector<std::string>& args);
+    Command::StatusData _GetSettingCallback(std::vector<std::string>& args);
+    Command::StatusData _GetAllSettingCallback(std::vector<std::string>& args);
+    void _AddCommands(Parser& parser);
 public:
     void LoadSettings(const std::filesystem::path& path);
     void ReloadSettings();

@@ -26,6 +26,10 @@ public:
         COMMAND_ALREADY_EXISTS,
         COMMAND_MISSING_CALLBACK
     };
+private:
+    Command::StatusData _BuiltinHelpCallback(std::vector<std::string>& args);
+public:
+    Parser();
 
     static std::string StatusToString(Status s);
     static std::string StatusToString(Command::Status s);

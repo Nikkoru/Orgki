@@ -1,11 +1,78 @@
 #include "Commands/Parser.hpp"
 #include "Commands/Command.hpp"
+#include "Logger.hpp"
 
+#include <functional>
+#include <print>
 #include <ranges>
 #include <string_view>
 #include <vector>
 
 namespace Orgki {
+Command::StatusData Parser::_BuiltinHelpCallback(std::vector<std::string>& args) {
+    const std::string ASCII_MAGENTA_FG  { "\x1b[35m" };
+    const std::string ASCII_GRAY_FG     { "\x1b[38;5;238m" };
+    const std::string ASCII_RESET       { "\x1b[0m" };
+
+        for (const auto& cmd : GetCommands()) {
+            if (args.size() == 1) {
+                if (cmd.command == args[0]) {
+                    std::println("  {}", cmd.command);
+                    std::println("      {}", cmd.description.empty() ? "no desc" : cmd.description);
+                    std::println("  USAGE:");
+                    std::println("      {} {}", cmd.command, cmd.usage);
+                    return { 
+                        .msg = "",
+                        .status = Orgki::Command::Status::OK
+                    };
+                }
+            }
+            else {
+                std::println("{}{} \x1b[3m{}{}{}", ASCII_MAGENTA_FG, cmd.command, ASCII_GRAY_FG, cmd.usage, ASCII_RESET);
+            }
+        }
+        return { 
+            .msg = "",
+            .status = Orgki::Command::Status::OK
+        };
+}
+
+Parser::Parser() {
+
+    // auto helpCallback = [&](std::vector<std::string>& args) -> Command::StatusData {
+    //     for (const auto& cmd : GetCommands()) {
+    //         if (args.size() == 1) {
+    //             if (cmd.command == args[0]) {
+    //                 std::println("  {}", cmd.command);
+    //                 std::println("      {}", cmd.description.empty() ? "no desc" : cmd.description);
+    //                 std::println("  USAGE:");
+    //                 std::println("      {} {}", cmd.command, cmd.usage);
+    //                 return { 
+    //                     .msg = "",
+    //                     .status = Orgki::Command::Status::OK
+    //                 };
+    //             }
+    //         }
+    //         else {
+    //             std::println("{}{} \x1b[3m{}{}{}", ASCII_MAGENTA_FG, cmd.command, ASCII_GRAY_FG, cmd.usage, ASCII_RESET);
+    //         }
+    //     }
+    //     return { 
+    //         .msg = "",
+    //         .status = Orgki::Command::Status::OK
+    //     };
+    // };
+
+    AddCommand({
+        .command = "help",
+        .description = "Shows this screen or details about the provided command",
+        .usage = "<CMD>",
+        .minArgs = 0,
+        .maxArgs = 1,
+        .callback = Command::Callback{ std::bind(&Parser::_BuiltinHelpCallback, this, std::placeholders::_1) }
+    });
+}
+
 std::string Parser::StatusToString(Status s) {
     switch (s) {
     default:
@@ -63,8 +130,10 @@ std::expected<Command::StatusData, Parser::Status> Parser::Parse(std::string cmd
         if (str.empty()) continue;
 
         if (activeCmd.empty()) {
-            if (str.contains('\"') || str.contains('\'') || str.contains('&'))
+            if (str.contains('\"') || str.contains('\'') || str.contains('&')) {
+                Logger::AddError(typeid(Parser), "Command not found: {},", str);
                 return std::unexpected(Status::ILL_FORMAT);
+            }
             else 
                 activeCmd = str;
             if (activeCmd == "exit")
@@ -139,6 +208,9 @@ std::expected<Command::StatusData, Parser::Status> Parser::Parse(std::string cmd
             args.emplace_back(str);
         }
     }
+
+    if (!pair.empty())
+        return std::unexpected(Status::ILL_FORMAT);
 
     if (args.size() > m_Cmds.at(activeCmd).maxArgs)
         return std::unexpected(Status::TOO_MANY_ARGS);
