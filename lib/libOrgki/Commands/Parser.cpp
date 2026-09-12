@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace Orgki {
-Command::StatusData Parser::_BuiltinHelpCallback(std::vector<std::string>& args) {
+Command::StatusData Parser::_BuiltinHelpCallback(Context*, std::vector<std::string>& args) {
     const std::string ASCII_MAGENTA_FG  { "\x1b[35m" };
     const std::string ASCII_GRAY_FG     { "\x1b[38;5;238m" };
     const std::string ASCII_RESET       { "\x1b[0m" };
@@ -37,7 +37,7 @@ Command::StatusData Parser::_BuiltinHelpCallback(std::vector<std::string>& args)
         };
 }
 
-Parser::Parser() {
+Parser::Parser(Context* ctx, bool builtinCmd) : m_ParentContext(ctx) {
 
     // auto helpCallback = [&](std::vector<std::string>& args) -> Command::StatusData {
     //     for (const auto& cmd : GetCommands()) {
@@ -63,14 +63,21 @@ Parser::Parser() {
     //     };
     // };
 
-    AddCommand({
-        .command = "help",
-        .description = "Shows this screen or details about the provided command",
-        .usage = "<CMD>",
-        .minArgs = 0,
-        .maxArgs = 1,
-        .callback = Command::Callback{ std::bind(&Parser::_BuiltinHelpCallback, this, std::placeholders::_1) }
-    });
+    if (builtinCmd) {
+        auto helpCallback = [this](Context* ctx, std::vector<std::string> args) -> Command::StatusData {
+            return _BuiltinHelpCallback(ctx, args);
+        };
+
+        AddCommand({
+            .command = "help",
+            .description = "Shows this screen or details about the provided command",
+            .usage = "<CMD>",
+            .minArgs = 0,
+            .maxArgs = 1,
+            // .callback = Command::Callback{ std::bind(&Parser::_BuiltinHelpCallback, this, std::placeholders::_1) }
+            .callback = helpCallback
+        });
+    }
 }
 
 std::string Parser::StatusToString(Status s) {
@@ -142,7 +149,7 @@ std::expected<Command::StatusData, Parser::Status> Parser::Parse(std::string cmd
                 return std::unexpected(Status::NO_COMMAND_FOUND);
         }
         else if (str == "&") {
-            m_Cmds.at(activeCmd).callback(args);
+            m_Cmds.at(activeCmd).callback(m_ParentContext, args);
             args.clear();
             activeCmd.erase();
         }
@@ -217,7 +224,7 @@ std::expected<Command::StatusData, Parser::Status> Parser::Parse(std::string cmd
     if (args.size() < m_Cmds.at(activeCmd).minArgs)
         return std::unexpected(Status::TOO_LITTLE_ARGS);
 
-    return m_Cmds.at(activeCmd).callback(args);
+    return m_Cmds.at(activeCmd).callback(m_ParentContext, args);
 }
 
 Parser::Status Parser::AddCommand(Command cmd) {

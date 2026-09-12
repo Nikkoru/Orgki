@@ -185,7 +185,8 @@ Command::StatusData Context::_BuiltinLuaSourceCallback(std::vector<std::string>&
     };
 }
 
-Context::Context(ContextInitSettings settings) {
+Context::Context(ContextInitSettings settings) :
+    luaState(nullptr), settingsMgr(settings.settingsPath), parser(this, settings.addBuiltInCmds) {
     if (settings.initLua) {
         luaState = luaL_newstate();
         if (settings.luaOpenLibs)
@@ -202,7 +203,7 @@ Context::Context(ContextInitSettings settings) {
                     .usage = "[LUA_CODE]",
                     .minArgs = 1,
                     .maxArgs = 1,
-                    .callback = Command::Callback{ std::bind(&Context::_BuiltinLuaCallback, this, std::placeholders::_1) }
+                    .callback = &Context::_BuiltinLuaCallback
                 },
                 {
                     .command = "luaSource",
@@ -210,7 +211,7 @@ Context::Context(ContextInitSettings settings) {
                     .usage = "[FILE]",
                     .minArgs = 1,
                     .maxArgs = 1,
-                    .callback = Command::Callback{ std::bind(&Context::_BuiltinLuaSourceCallback, this, std::placeholders::_1) } 
+                    .callback = &Context::_BuiltinLuaSourceCallback 
                 },
             });
 

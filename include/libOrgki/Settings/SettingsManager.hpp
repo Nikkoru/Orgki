@@ -9,23 +9,26 @@
 
 namespace Orgki {
 class Parser;
+class Context;
 class SettingsManager {
 private:
-    friend struct Context;
+    friend class Context;
 private:
     std::filesystem::path m_ActivePath{};
     nlohmann::json m_JsonObject{};
     bool m_Loaded{};
 private:
-    Command::StatusData _AddSettingCallback(std::vector<std::string>& args);
-    Command::StatusData _SetSettingCallback(std::vector<std::string>& args);
-    Command::StatusData _RemoveSettingCallback(std::vector<std::string>& args);
-    Command::StatusData _GetSettingCallback(std::vector<std::string>& args);
-    Command::StatusData _GetAllSettingCallback(std::vector<std::string>& args);
+    Command::StatusData _AddSettingCallback(Context* ctx, std::vector<std::string>& args);
+    Command::StatusData _SetSettingCallback(Context* ctx, std::vector<std::string>& args);
+    Command::StatusData _RemoveSettingCallback(Context* ctx, std::vector<std::string>& args);
+    Command::StatusData _GetSettingCallback(Context* ctx, std::vector<std::string>& args);
+    Command::StatusData _GetAllSettingCallback(Context* ctx, std::vector<std::string>& args);
     void _AddCommands(Parser& parser);
 public:
-    void LoadSettings(const std::filesystem::path& path);
-    void ReloadSettings();
+    SettingsManager(const std::filesystem::path& file = "");
+    ~SettingsManager() = default;
+
+    void LoadSettings(const std::filesystem::path& path = "");
     void UnloadSettings();
 
     bool SettingsLoaded();

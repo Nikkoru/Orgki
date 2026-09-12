@@ -5,6 +5,7 @@
 #include <vector>
 
 namespace Orgki {
+class Context;
 struct Command {
     enum class Status {
         OK = 0,
@@ -19,7 +20,7 @@ struct Command {
     };
 
     using Args = std::vector<std::string>;
-    using Callback = std::function<StatusData(Args&)>;
+    using Callback = std::function<StatusData(Context*, Args&)>;
 
     std::string command{};
     std::string description{};

@@ -8,9 +8,11 @@
 #include <map>
 
 namespace Orgki {
+class Context;
 class Parser {
 private:
     std::map<std::string, Command> m_Cmds;
+    Context* m_ParentContext = nullptr;
 public:
     enum class Status : uint8_t {
         OK = 0,
@@ -27,9 +29,9 @@ public:
         COMMAND_MISSING_CALLBACK
     };
 private:
-    Command::StatusData _BuiltinHelpCallback(std::vector<std::string>& args);
+    Command::StatusData _BuiltinHelpCallback(Context* ctx, std::vector<std::string>& args);
 public:
-    Parser();
+    Parser(Context* ctx, bool builtInCmds = true);
 
     static std::string StatusToString(Status s);
     static std::string StatusToString(Command::Status s);

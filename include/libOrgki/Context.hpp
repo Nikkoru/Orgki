@@ -21,7 +21,7 @@ public:
     lua_State* luaState{};
     SettingsManager settingsMgr{};
     PlanManager planMgr{};
-    Parser parser{};
+    Parser parser{ nullptr };
 private:
     Command::StatusData _BuiltinLuaCallback(std::vector<std::string>& args);
     Command::StatusData _BuiltinLuaSourceCallback(std::vector<std::string>& args);

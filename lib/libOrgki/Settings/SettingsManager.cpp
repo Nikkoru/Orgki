@@ -2,7 +2,10 @@
 #include "Commands/Command.hpp"
 #include "Commands/Parser.hpp"
 #include "Settings/SettingsData.hpp"
+#include "Context.hpp"
+#include <filesystem>
 #include <fstream>
+#include <functional>
 #include <nlohmann/json.hpp>
 
 namespace fs = std::filesystem;
@@ -18,12 +21,12 @@ bool isNumeric(const std::string& str) {
 }
 
 namespace Orgki {
-Command::StatusData SettingsManager::_AddSettingCallback(std::vector<std::string>& args) {
+Command::StatusData SettingsManager::_AddSettingCallback(Context* ctx, std::vector<std::string>& args) {
     const std::string ASCII_RED_FG      { "\x1b[31m" };
     const std::string ASCII_GREEN_FG    { "\x1b[32m" };
     const std::string ASCII_RESET       { "\x1b[0m" };
 
-    ReloadSettings();
+    LoadSettings();
     if (!Contains("testSettings")) {
         AddSetting("testSettings");
         SaveToDisk();
@@ -51,12 +54,12 @@ Command::StatusData SettingsManager::_AddSettingCallback(std::vector<std::string
     };
 }
 
-Command::StatusData SettingsManager::_SetSettingCallback(std::vector<std::string>& args) {
+Command::StatusData SettingsManager::_SetSettingCallback(Context* ctx, std::vector<std::string>& args) {
     const std::string ASCII_RED_FG      { "\x1b[31m" };
     const std::string ASCII_GREEN_FG    { "\x1b[32m" };
     const std::string ASCII_RESET       { "\x1b[0m" };
 
-    ReloadSettings();
+    LoadSettings();
     if (!Contains("testSettings")) {
         AddSetting("testSettings");
         SaveToDisk();
@@ -95,12 +98,12 @@ Command::StatusData SettingsManager::_SetSettingCallback(std::vector<std::string
     };
 }
 
-Command::StatusData SettingsManager::_RemoveSettingCallback(std::vector<std::string>& args) {
+Command::StatusData SettingsManager::_RemoveSettingCallback(Context* ctx, std::vector<std::string>& args) {
     const std::string ASCII_RED_FG      { "\x1b[31m" };
     const std::string ASCII_GREEN_FG    { "\x1b[32m" };
     const std::string ASCII_RESET       { "\x1b[0m" };
 
-    ReloadSettings();
+    LoadSettings();
     if (!Contains("testSettings")) {
         AddSetting("testSettings");
         SaveToDisk();
@@ -123,14 +126,14 @@ Command::StatusData SettingsManager::_RemoveSettingCallback(std::vector<std::str
     };
 }
 
-Command::StatusData SettingsManager::_GetSettingCallback(std::vector<std::string>& args) {
+Command::StatusData SettingsManager::_GetSettingCallback(Context* ctx, std::vector<std::string>& args) {
     return {
         .msg = "Not implemented",
         .status = Orgki::Command::Status::FAILED
     };
 }
 
-Command::StatusData SettingsManager::_GetAllSettingCallback(std::vector<std::string>& args) {
+Command::StatusData SettingsManager::_GetAllSettingCallback(Context* ctx, std::vector<std::string>& args) {
     return {
         .msg = "Not implemented",
         .status = Orgki::Command::Status::FAILED
@@ -142,11 +145,21 @@ void SettingsManager::_AddCommands(Parser& parser) {
     const std::string ASCII_GREEN_FG    { "\x1b[32m" };
     const std::string ASCII_RESET       { "\x1b[0m" };
 
-    auto addSettingCallback = Command::Callback{ std::bind(&SettingsManager::_AddSettingCallback, this, std::placeholders::_1) };
-    auto setSettingCallback = Command::Callback{ std::bind(&SettingsManager::_SetSettingCallback, this, std::placeholders::_1) };
-    auto removeSettingCallback = Command::Callback{ std::bind(&SettingsManager::_RemoveSettingCallback, this, std::placeholders::_1) };
-    auto getSettingCallback = Command::Callback{ std::bind(&SettingsManager::_GetSettingCallback, this, std::placeholders::_1) };
-    auto getAllSettingsCallback = Command::Callback{ std::bind(&SettingsManager::_GetAllSettingCallback, this, std::placeholders::_1) };
+    auto addSettingCallback = [this](Context* ctx, std::vector<std::string> args) -> Command::StatusData {
+        return _AddSettingCallback(ctx, args);
+    };
+    auto setSettingCallback = [this](Context* ctx, std::vector<std::string> args) -> Command::StatusData {
+        return _SetSettingCallback(ctx, args);
+    };
+    auto removeSettingCallback = [this](Context* ctx, std::vector<std::string> args) -> Command::StatusData {
+        return _RemoveSettingCallback(ctx, args);
+    };
+    auto getSettingCallback = [this](Context* ctx, std::vector<std::string> args) -> Command::StatusData {
+        return _GetSettingCallback(ctx, args);
+    };
+    auto getAllSettingsCallback = [this](Context* ctx, std::vector<std::string> args) -> Command::StatusData {
+        return _GetAllSettingCallback(ctx, args);
+    };
 
     parser.AddCommandBulk({
         {
@@ -192,8 +205,18 @@ void SettingsManager::_AddCommands(Parser& parser) {
     });
 }
 
+SettingsManager::SettingsManager(const fs::path& path) : m_ActivePath(path) {
+    LoadSettings();
+}
+
 void SettingsManager::LoadSettings(const std::filesystem::path& path) {
-    auto f = std::ifstream{ path };
+    if (!path.empty())
+        m_ActivePath = path;
+
+    if (m_ActivePath.empty())
+        return;
+
+    auto f = std::ifstream{ m_ActivePath };
     if (!f.is_open()) return;
 
     UnloadSettings();
@@ -203,14 +226,7 @@ void SettingsManager::LoadSettings(const std::filesystem::path& path) {
         m_JsonObject = json{};
 
     f.close();
-    m_ActivePath = path;
     m_Loaded = true;
-}
-
-void SettingsManager::ReloadSettings() {
-    if (m_ActivePath.empty()) return;
-
-    LoadSettings(m_ActivePath);
 }
 
 void SettingsManager::UnloadSettings() {
