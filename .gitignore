@@ -50,6 +50,7 @@ install-*/
 
 # VisualStudio stuff
 .vs/
+.vscode/
 
 # CMake generated files
 CMakeFiles/
