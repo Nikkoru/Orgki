@@ -60,7 +60,8 @@ void Logger::AddLog(std::string logType, std::string caller, std::string_view fm
         savedLog = std::format("[{}] {}", unescapedLogType, preFormattedLog);
     }
 
-    std::cout << formattedLog << '\n';
+    if (GetInstance()->m_LogToConsole)
+        std::cout << formattedLog << '\n';
     
     if (!GetInstance()->m_LogFile.empty()) {
         std::ofstream o{ GetInstance()->m_LogFile, std::ios::app };

@@ -48,6 +48,7 @@ public:
 	static void AddCritical(std::type_index caller, std::string_view fmt = "", Args&&... elms);
 
     void SaveToLogFile(const std::filesystem::path& path);
+    void LogToConsole(bool log);
 
 	std::vector<std::pair<LogType, std::string>> GetLogs() const;
 
@@ -55,6 +56,7 @@ public:
 public:
 	std::vector<std::pair<LogType, std::string>> m_Logs;
     std::filesystem::path m_LogFile{};
+    bool m_LogToConsole{ true };
 private:
 	static std::shared_ptr<Logger> m_Instance;
 };

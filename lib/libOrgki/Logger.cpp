@@ -11,7 +11,7 @@ std::string Logger::GetColorViaLogType(LogType logType) {
     const std::string blue = "\x1b[0;34m";
     const std::string hiRed = "\x1b[0;91m";
 
-    std::string color;
+    std::string color{};
 
     switch (logType) {
         case LogType::Custom:
@@ -50,6 +50,9 @@ std::shared_ptr<Logger> Logger::GetInstance() {
 void Logger::SaveToLogFile(const std::filesystem::path& path) {
     if (path.empty()) return;
     m_LogFile = path;
+}
+void Logger::LogToConsole(bool log) {
+    m_LogToConsole = log;
 }
 
 std::vector<std::pair<LogType, std::string>> Logger::GetLogs() const {
