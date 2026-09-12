@@ -21,6 +21,8 @@ set(CMAKE_AUTORCC ON)
 
 set(ORGKI_HEADERS_DIR "${PROJECT_SOURCE_DIR}/include")
 
+option(ORGKI_CLI "builds a CLI instead of TUI" OFF)
+
 add_subdirectory(externals)
 add_subdirectory(include)
 add_subdirectory(lib)
@@ -33,6 +35,10 @@ add_executable(Orgki
 
 set_property(TARGET Orgki PROPERTY CXX_STANDARD 23)
 target_compile_features(Orgki PRIVATE cxx_std_23)
+
+if (ORGKI_CLI)
+    target_compile_definitions(Orgki PRIVATE ORGKI_BUILD_CLI)
+endif()
 
 if(MSVC)
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>")
