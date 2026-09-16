@@ -1,15 +1,15 @@
 #include "Commands/Parser.hpp"
 #include "Commands/Command.hpp"
 #include "Logger.hpp"
+#include "Context.hpp"
 
 #include <functional>
-#include <print>
 #include <ranges>
 #include <string_view>
 #include <vector>
 
 namespace Orgki {
-Command::StatusData Parser::_BuiltinHelpCallback(Context*, std::vector<std::string>& args) {
+Command::StatusData Parser::_BuiltinHelpCallback(Context* ctx, std::vector<std::string>& args) {
     const std::string ASCII_MAGENTA_FG  { "\x1b[35m" };
     const std::string ASCII_GRAY_FG     { "\x1b[38;5;238m" };
     const std::string ASCII_RESET       { "\x1b[0m" };
@@ -17,22 +17,22 @@ Command::StatusData Parser::_BuiltinHelpCallback(Context*, std::vector<std::stri
         for (const auto& cmd : GetCommands()) {
             if (args.size() == 1) {
                 if (cmd.command == args[0]) {
-                    std::println("  {}", cmd.command);
-                    std::println("      {}", cmd.description.empty() ? "no desc" : cmd.description);
-                    std::println("  USAGE:");
-                    std::println("      {} {}", cmd.command, cmd.usage);
+                    ctx->PrintLnToBuffer("  {}", cmd.command);
+                    ctx->PrintLnToBuffer("      {}", cmd.description.empty() ? "no desc" : cmd.description);
+                    ctx->PrintLnToBuffer("  USAGE:");
+                    ctx->PrintLnToBuffer("      {} {}", cmd.command, cmd.usage);
                     return { 
-                        .msg = "",
+                        .msg = ctx->buffer.str(),
                         .status = Orgki::Command::Status::OK
                     };
                 }
             }
             else {
-                std::println("{}{} \x1b[3m{}{}{}", ASCII_MAGENTA_FG, cmd.command, ASCII_GRAY_FG, cmd.usage, ASCII_RESET);
+                ctx->PrintLnToBuffer("{} {}", cmd.command, cmd.usage);
             }
         }
         return { 
-            .msg = "",
+            .msg = ctx->buffer.str(),
             .status = Orgki::Command::Status::OK
         };
 }
@@ -123,6 +123,8 @@ std::string Parser::StatusToString(Command::Status s) {
 
 std::expected<Command::StatusData, Parser::Status> Parser::Parse(std::string cmd) {
     if (cmd.empty()) return std::unexpected(Status::BUFFER_EMPTY);
+    m_History.emplace(m_History.begin(), cmd);
+    m_HistoryPos = 0;
 
     auto tokens = cmd | std::views::split(' ');
     std::string activeCmd{};
@@ -150,6 +152,8 @@ std::expected<Command::StatusData, Parser::Status> Parser::Parse(std::string cmd
         }
         else if (str == "&") {
             m_Cmds.at(activeCmd).callback(m_ParentContext, args);
+            m_ParentContext->buffer.str("");
+            m_ParentContext->buffer.clear();
             args.clear();
             activeCmd.erase();
         }
@@ -224,7 +228,10 @@ std::expected<Command::StatusData, Parser::Status> Parser::Parse(std::string cmd
     if (args.size() < m_Cmds.at(activeCmd).minArgs)
         return std::unexpected(Status::TOO_LITTLE_ARGS);
 
-    return m_Cmds.at(activeCmd).callback(m_ParentContext, args);
+    auto status = m_Cmds.at(activeCmd).callback(m_ParentContext, args);
+    m_ParentContext->buffer.str("");
+    m_ParentContext->buffer.clear();
+    return status;
 }
 
 Parser::Status Parser::AddCommand(Command cmd) {
@@ -248,6 +255,58 @@ std::pair<Parser::Status, std::string> Parser::AddCommandBulk(std::vector<Comman
     return { Status::OK, "" };
 }
 
+bool Parser::HasActiveMatch() {
+    return !m_FoundMatches.empty();
+}
+
+void Parser::FindMatches(const std::string& prefix) {
+    m_FoundMatches.clear();
+    m_MatchesPos = 0;
+
+    for (const auto& [name, cmd] : m_Cmds) {
+        if (name.starts_with(prefix))
+            m_FoundMatches.emplace_back(cmd);
+        else continue;
+    }
+}
+
+void Parser::ClearMatches() {
+    m_FoundMatches.clear();
+}
+
+std::expected<Command, Parser::Status> Parser::GetNextMatch() {
+    if (m_FoundMatches.empty()) return std::unexpected(Status::NO_COMMAND_FOUND);
+
+    if (m_MatchesPos == -1) m_MatchesPos += 2;
+    if (m_MatchesPos >= m_FoundMatches.size()) return std::unexpected(Status::NO_COMMAND_FOUND);
+    
+    return m_FoundMatches.at(m_MatchesPos++);
+}
+
+std::expected<Command, Parser::Status> Parser::GetPreviousMatch() {
+    if (m_FoundMatches.empty()) return std::unexpected(Status::NO_COMMAND_FOUND);
+
+    if (m_MatchesPos == m_FoundMatches.size()) m_MatchesPos -= 2;
+    if (m_MatchesPos < 0) return std::unexpected(Status::NO_COMMAND_FOUND);
+    return m_FoundMatches.at(m_MatchesPos--);
+}
+
+std::string Parser::GetNextHistory() {
+    if (m_History.empty()) return {};
+
+    if (m_HistoryPos == -1) m_HistoryPos++;
+    if (m_HistoryPos >= m_History.size()) return {};
+    return m_History.at(m_HistoryPos++);
+}
+
+std::string Parser::GetPreviousHistory() {
+    if (m_History.empty()) return {};
+
+    if (m_HistoryPos == m_History.size()) m_HistoryPos--;
+    if (m_HistoryPos < 0) return {};
+    return m_History.at(m_HistoryPos--);
+}
+
 std::vector<Command> Parser::GetCommands() {
     std::vector<Command> vec{};
 
@@ -255,5 +314,10 @@ std::vector<Command> Parser::GetCommands() {
         vec.emplace_back(cmd);
 
     return vec;
+}
+
+std::expected<Command, Parser::Status> Parser::GetCommand(const std::string& cmd) {
+    if (m_Cmds.contains(cmd)) return m_Cmds.at(cmd);
+    else return std::unexpected(Status::NO_COMMAND_FOUND);
 }
 }

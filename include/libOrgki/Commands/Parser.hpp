@@ -11,7 +11,11 @@ namespace Orgki {
 class Context;
 class Parser {
 private:
+    int m_HistoryPos{};
+    int m_MatchesPos{};
+    std::vector<Command> m_FoundMatches{};
     std::map<std::string, Command> m_Cmds;
+    std::vector<std::string> m_History;
     Context* m_ParentContext = nullptr;
 public:
     enum class Status : uint8_t {
@@ -40,6 +44,16 @@ public:
     Status AddCommand(Command cmd);
     std::pair<Status, std::string> AddCommandBulk(std::vector<Command> cmds);
 
+    bool HasActiveMatch();
+    void FindMatches(const std::string& prefix);
+    void ClearMatches();
+    std::expected<Command, Status> GetNextMatch();
+    std::expected<Command, Status> GetPreviousMatch();
+
+	std::string GetNextHistory();
+	std::string GetPreviousHistory();
+
     std::vector<Command> GetCommands();
+    std::expected<Command, Status> GetCommand(const std::string& cmd);
 };
 }
