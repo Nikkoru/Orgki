@@ -2,11 +2,13 @@
 
 #include <string>
 #include <map>
+#include <cstdint>
 
 #include "Table.hpp"
 #include "Activity.hpp"
 
 namespace Orgki {
+using PlanID = uint32_t;
 class Plan {
 private:
     std::map<TableID, Table> m_Tables;
@@ -14,6 +16,12 @@ private:
     std::string m_PlanName;
     std::string m_PlanDescription;
 public:
+    Plan(std::string name, std::string desc = "");
+    Plan() : Plan("") {}
+
+    std::string GetName() const;
+    std::string GetDescription() const;
+
     void AddTable(Table& table, TableID id);
     void AddTable(const std::string& tableName);
     Table& GetTable(TableID id);

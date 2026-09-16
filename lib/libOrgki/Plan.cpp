@@ -5,6 +5,16 @@
 #include <stdexcept>
 
 namespace Orgki {
+Plan::Plan(std::string name, std::string desc) : m_PlanName(name), m_PlanDescription(desc) {}
+
+std::string Plan::GetName() const {
+    return m_PlanName;
+}
+
+std::string Plan::GetDescription() const {
+    return m_PlanDescription;
+}
+
 void Plan::AddTable(Table& table, TableID id) {
     if (m_Tables.contains(id)) {
         std::println("ID already is taken");
