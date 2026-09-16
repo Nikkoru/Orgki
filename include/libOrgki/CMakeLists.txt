@@ -2,6 +2,9 @@ set(libOrgki_HEADERS
     "${ORGKI_HEADERS_DIR}/libOrgki/Plan.hpp"
     "${ORGKI_HEADERS_DIR}/libOrgki/Table.hpp"
 
+    "${ORGKI_HEADERS_DIR}/libOrgki/Helpers/Humanize.hpp"
+    "${ORGKI_HEADERS_DIR}/libOrgki/Helpers/Time.hpp"
+
     "${ORGKI_HEADERS_DIR}/libOrgki/Commands/Command.hpp"
     "${ORGKI_HEADERS_DIR}/libOrgki/Commands/Parser.hpp"
 

@@ -1,8 +1,11 @@
 ﻿set(libOrgki_SOURCES
     "${PROJECT_SOURCE_DIR}/lib/libOrgki/Plan.cpp"
+    "${PROJECT_SOURCE_DIR}/lib/libOrgki/PlanManager.cpp"
     "${PROJECT_SOURCE_DIR}/lib/libOrgki/Table.cpp"
     "${PROJECT_SOURCE_DIR}/lib/libOrgki/Context.cpp"
     "${PROJECT_SOURCE_DIR}/lib/libOrgki/Logger.cpp"
+
+    "${PROJECT_SOURCE_DIR}/lib/libOrgki/Helpers/Time.cpp"
 
     "${PROJECT_SOURCE_DIR}/lib/libOrgki/Settings/SettingsData.cpp"
     "${PROJECT_SOURCE_DIR}/lib/libOrgki/Settings/SettingsManager.cpp"

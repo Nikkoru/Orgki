@@ -2,8 +2,6 @@
     "${PROJECT_SOURCE_DIR}/src/main.cpp"
     # "${PROJECT_SOURCE_DIR}/src/MainWindow.cpp"
 
-    "${PROJECT_SOURCE_DIR}/src/Helpers/Time.cpp"
-
     "${PROJECT_SOURCE_DIR}/src/Views/MainView.cpp"
 
     # "${PROJECT_SOURCE_DIR}/src/Views/TabView.cpp"

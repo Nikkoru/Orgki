@@ -1,5 +1,5 @@
-#include "Orgki/Helpers/Time.hpp"
-#include "libOrgki/Time/TimeRange.hpp"
+#include "Helpers/Time.hpp"
+#include "Time/TimeRange.hpp"
 #include <algorithm>
 #include <format>
 
@@ -27,7 +27,8 @@ size_t findClosestToMiddle(const std::string& str, char target) {
 }
 }
 
-Orgki::Time Helper::StringToTime(const std::string str, bool monthFirst) {
+namespace Orgki::Helper {
+Orgki::Time StringToTime(const std::string str, bool monthFirst) {
     std::string yearStr{};
     std::string monthStr{};
     std::string dayStr{};
@@ -126,7 +127,7 @@ Orgki::Time Helper::StringToTime(const std::string str, bool monthFirst) {
     };
 }
 
-std::string Helper::TimeToString(const Orgki::Time time) {
+std::string TimeToString(const Orgki::Time time) {
     return std::format("{:02}/{:02}/{:02}+{:02}:{:02}:{:02}",
         time.m_DayNumber,
         static_cast<unsigned int>(time.m_Month),
@@ -137,7 +138,7 @@ std::string Helper::TimeToString(const Orgki::Time time) {
     );
 }
 
-Orgki::TimeRange Helper::StringToTimeRange(const std::string str, bool monthFirst) {
+Orgki::TimeRange StringToTimeRange(const std::string str, bool monthFirst) {
     if (!str.contains('-')) return {};
 
     auto t1Str = str.substr(0, findClosestToMiddle(str, '-'));
@@ -152,6 +153,7 @@ Orgki::TimeRange Helper::StringToTimeRange(const std::string str, bool monthFirs
     };
 }
 
-std::string Helper::TimeRangeToString(const Orgki::TimeRange timeRange) {
+std::string TimeRangeToString(const Orgki::TimeRange timeRange) {
     return std::format("{} - {}", TimeToString(timeRange.m_FirstPoint), TimeToString(timeRange.m_FirstPoint));
+}
 }
