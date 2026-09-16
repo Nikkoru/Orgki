@@ -22,6 +22,7 @@ set(CMAKE_AUTORCC ON)
 set(ORGKI_HEADERS_DIR "${PROJECT_SOURCE_DIR}/include")
 
 option(ORGKI_CLI "builds a CLI instead of TUI" OFF)
+option(ORGKI_STATIC "Builds, with static linking instead of dynamic linking dependencies" ON)
 
 add_subdirectory(externals)
 add_subdirectory(include)
@@ -38,6 +39,15 @@ target_compile_features(Orgki PRIVATE cxx_std_23)
 
 if (ORGKI_CLI)
     target_compile_definitions(Orgki PRIVATE ORGKI_BUILD_CLI)
+endif()
+
+if (ORGKI_STATIC)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options("-static")
+        add_compile_options("$<$<COMPILE_LANGUAGE::CXX>:-static-libstdc++>")
+        add_compile_options("$<$<COMPILE_LANGUAGE::CXX>:-static-libgcc>")
+        add_compile_options("$<$<COMPILE_LANGUAGE::C>:-static-libgcc>")
+    endif()
 endif()
 
 if(MSVC)
