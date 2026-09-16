@@ -145,19 +145,19 @@ void SettingsManager::_AddCommands(Parser& parser) {
     const std::string ASCII_GREEN_FG    { "\x1b[32m" };
     const std::string ASCII_RESET       { "\x1b[0m" };
 
-    auto addSettingCallback = [this](Context* ctx, std::vector<std::string> args) -> Command::StatusData {
+    auto addSettingCallback = [this](Context* ctx, std::vector<std::string>& args) -> Command::StatusData {
         return _AddSettingCallback(ctx, args);
     };
-    auto setSettingCallback = [this](Context* ctx, std::vector<std::string> args) -> Command::StatusData {
+    auto setSettingCallback = [this](Context* ctx, std::vector<std::string>& args) -> Command::StatusData {
         return _SetSettingCallback(ctx, args);
     };
-    auto removeSettingCallback = [this](Context* ctx, std::vector<std::string> args) -> Command::StatusData {
+    auto removeSettingCallback = [this](Context* ctx, std::vector<std::string>& args) -> Command::StatusData {
         return _RemoveSettingCallback(ctx, args);
     };
-    auto getSettingCallback = [this](Context* ctx, std::vector<std::string> args) -> Command::StatusData {
+    auto getSettingCallback = [this](Context* ctx, std::vector<std::string>& args) -> Command::StatusData {
         return _GetSettingCallback(ctx, args);
     };
-    auto getAllSettingsCallback = [this](Context* ctx, std::vector<std::string> args) -> Command::StatusData {
+    auto getAllSettingsCallback = [this](Context* ctx, std::vector<std::string>& args) -> Command::StatusData {
         return _GetAllSettingCallback(ctx, args);
     };
 

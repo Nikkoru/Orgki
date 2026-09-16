@@ -1,5 +1,8 @@
 #include "Context.hpp"
+#include <format>
 #include <lauxlib.h>
+#include <print>
+#include <string_view>
 
 // namespace {
 // void AddBuiltInCommands(Orgki::Parser& parser) {
@@ -195,6 +198,7 @@ Context::Context(ContextInitSettings settings) :
 
     if (settings.addBuiltInCmds) {
         settingsMgr._AddCommands(parser);
+        planMgr._AddCommands(parser);
         if (settings.initLua) {
             parser.AddCommandBulk({
                 {
@@ -229,4 +233,5 @@ Context::Context(ContextInitSettings settings) :
 Context::~Context() {
     lua_close(luaState);
 }
+
 }
