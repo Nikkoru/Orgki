@@ -274,20 +274,20 @@ void Parser::ClearMatches() {
     m_FoundMatches.clear();
 }
 
-std::expected<Command, Parser::Status> Parser::GetNextMatch() {
-    if (m_FoundMatches.empty()) return std::unexpected(Status::NO_COMMAND_FOUND);
+std::optional<Command> Parser::GetNextMatch() {
+    if (m_FoundMatches.empty()) return std::nullopt;
 
     if (m_MatchesPos == -1) m_MatchesPos += 2;
-    if (m_MatchesPos >= m_FoundMatches.size()) return std::unexpected(Status::NO_COMMAND_FOUND);
+    if (m_MatchesPos >= m_FoundMatches.size()) return std::nullopt;
     
     return m_FoundMatches.at(m_MatchesPos++);
 }
 
-std::expected<Command, Parser::Status> Parser::GetPreviousMatch() {
-    if (m_FoundMatches.empty()) return std::unexpected(Status::NO_COMMAND_FOUND);
+std::optional<Command> Parser::GetPreviousMatch() {
+    if (m_FoundMatches.empty()) return std::nullopt;
 
     if (m_MatchesPos == m_FoundMatches.size()) m_MatchesPos -= 2;
-    if (m_MatchesPos < 0) return std::unexpected(Status::NO_COMMAND_FOUND);
+    if (m_MatchesPos < 0) return std::nullopt;
     return m_FoundMatches.at(m_MatchesPos--);
 }
 

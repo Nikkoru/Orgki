@@ -3,6 +3,7 @@
 #include "Command.hpp"
 #include <cstdint>
 #include <expected>
+#include <optional>
 #include <string>
 #include <vector>
 #include <map>
@@ -47,8 +48,8 @@ public:
     bool HasActiveMatch();
     void FindMatches(const std::string& prefix);
     void ClearMatches();
-    std::expected<Command, Status> GetNextMatch();
-    std::expected<Command, Status> GetPreviousMatch();
+    std::optional<Command> GetNextMatch();
+    std::optional<Command> GetPreviousMatch();
 
 	std::string GetNextHistory();
 	std::string GetPreviousHistory();
