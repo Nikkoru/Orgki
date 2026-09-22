@@ -34,6 +34,10 @@ private:
 
     void _AddCommands(Parser& parser);
 public:
+    bool IsEmpty();
+
+    std::vector<Plan>& GetAllPlans();
+
     PlanID CreatePlan(const std::string& name, const std::string& desc = "");
     void DeletePlan(PlanID id);
 };

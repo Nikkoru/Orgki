@@ -1,5 +1,7 @@
 #include "PlanManager.hpp"
 
+#include "Logger.hpp"
+
 #include "Helpers/Time.hpp"
 #include "Context.hpp"
 
@@ -48,7 +50,7 @@ Command::StatusData PlanManager::_SetActivePlanCallback(Context* ctx, std::vecto
 
 Command::StatusData PlanManager::_CreateTableCallback(Context* ctx, std::vector<std::string>& args) {
     if (!m_ActivePlan) return {
-        .msg = "",
+        .msg = "There's not an active plan",
         .status = Command::Status::FAILED
     };
 
@@ -62,7 +64,7 @@ Command::StatusData PlanManager::_CreateTableCallback(Context* ctx, std::vector<
 
 Command::StatusData PlanManager::_GetTablesCallback(Context* ctx, std::vector<std::string>& args) {
     if (!m_ActivePlan) return {
-        .msg = "",
+        .msg = "There's not an active plan",
         .status = Command::Status::FAILED
     };
 
@@ -80,7 +82,7 @@ Command::StatusData PlanManager::_GetTablesCallback(Context* ctx, std::vector<st
 
 Command::StatusData PlanManager::_EditTableCallback(Context* ctx, std::vector<std::string>& args) {
     if (!m_ActivePlan) return {
-        .msg = "",
+        .msg = "There's not an active plan",
         .status = Command::Status::FAILED
     };
     
@@ -92,7 +94,7 @@ Command::StatusData PlanManager::_EditTableCallback(Context* ctx, std::vector<st
 
 Command::StatusData PlanManager::_GetTableCallback(Context* ctx, std::vector<std::string>& args) {
     if (!m_ActivePlan) return {
-        .msg = "",
+        .msg = "There's not an active plan",
         .status = Command::Status::FAILED
     };
 
@@ -127,7 +129,10 @@ Command::StatusData PlanManager::_GetTableCallback(Context* ctx, std::vector<std
 }
 
 Command::StatusData PlanManager::_CreateActivityCallback(Context* ctx, std::vector<std::string>& args) {
-    
+    return {
+        .msg = "Not implemented",
+        .status = Command::Status::FAILED
+    };
 }
 
 Command::StatusData PlanManager::_GetActivitiesCallback(Context* ctx, std::vector<std::string>& args) {
@@ -151,7 +156,7 @@ Command::StatusData PlanManager::_GetActivitiesCallback(Context* ctx, std::vecto
 
 Command::StatusData PlanManager::_EditActivityCallback(Context* ctx, std::vector<std::string>& args) {
     if (!m_ActivePlan) return {
-        .msg = "",
+        .msg = "There's not an active plan",
         .status = Command::Status::FAILED
     };
 
@@ -235,11 +240,17 @@ Command::StatusData PlanManager::_EditActivityCallback(Context* ctx, std::vector
 }
 
 Command::StatusData PlanManager::_GetActivityCallback(Context* ctx, std::vector<std::string>& args) {
-
+    return {
+        .msg = "Not implemented",
+        .status = Command::Status::FAILED
+    };
 }
 
 Command::StatusData PlanManager::_AddActivityToTableCallback(Context* ctx, std::vector<std::string>& args) {
-
+    return {
+        .msg = "Not implemented",
+        .status = Command::Status::FAILED
+    };
 }
 
 void PlanManager::_AddCommands(Parser& parser) {
@@ -346,8 +357,18 @@ void PlanManager::_AddCommands(Parser& parser) {
         }
     });
 }
-    
+
+bool PlanManager::IsEmpty() {
+    return m_LoadedPlans.empty();
+}
+
+std::vector<Plan>& PlanManager::GetAllPlans() {
+    return m_LoadedPlans;
+}
+
 PlanID PlanManager::CreatePlan(const std::string& name, const std::string& desc) {
+    Logger::AddInfo(typeid(PlanManager), "CreatePlan; name = {}, desc = {}", name, desc);
+
     m_LoadedPlans.emplace_back(name, desc); 
     return m_LoadedPlans.size() - 1;
 }

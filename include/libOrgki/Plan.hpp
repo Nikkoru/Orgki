@@ -26,8 +26,8 @@ public:
     void AddTable(const std::string& tableName);
     Table& GetTable(TableID id);
     void SetTable(TableID id, Table& newTable);
-    bool TableExists(TableID id) { return m_Tables.contains(id); }
-    size_t GetTableCount() { return m_Tables.size(); }
+    bool TableExists(TableID id) const { return m_Tables.contains(id); }
+    size_t GetTableCount() const { return m_Tables.size(); }
     std::map<TableID, Table>& GetTables() { return m_Tables; };
 
     void CreateActivity(Activity& act);
