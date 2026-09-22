@@ -2,6 +2,7 @@
 #include "libOrgki/Commands/Parser.hpp"
 #include "libOrgki/Context.hpp"
 #include "libOrgki/Settings/SettingsManager.hpp"
+#include "libOrgki/Logger.hpp"
 #include <filesystem>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
@@ -10,35 +11,30 @@
 #include <ftxui/component/loop.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <print>
-#include <string>
 #include <ftxui/ftxui.hpp>
 
 #include <lua.hpp>
 
-// #include <QApplication>
-//
-// #include "Orgki/MainWindow.hpp"
+#ifdef ORGKI_GUI
+#include <QApplication>
+#include "Orgki/MainWindow.hpp"
+#else
+#include <string>
+#endif
 
 int main(int argc, char** argv) {
+    Logger::GetInstance()->SaveToLogFile("log.txt");
+
     auto settings = Orgki::ContextInitSettings{
         .settingsPath = "settings.json"
     };
     auto ctx = Orgki::Context{ settings };
-    std::string cmd{};
 
     std::println("lost a week bc of mistakenly putting discard in the commit instead of reset");
     std::println("current path = {}", std::filesystem::current_path().string());
-
-#ifdef ORGKI_BUILD_CLI
-    Logger::GetInstance()->SaveToLogFile("log.txt");
+#ifdef ORGKI_CLI
+    std::string cmd{};
     Logger::GetInstance()->LogToConsole(false);
-    // QApplication app{argc, argv};
-    // MainWindow win{};
-    // std::println("Orgki or smth");
-    //
-    // win.show();
-    //
-    // return app.exec();
     
     while (true) {
         std::println();
@@ -79,7 +75,18 @@ int main(int argc, char** argv) {
                 std::println("{}", status.value().msg);
         }
     }
+#elif defined(ORGKI_GUI)
+    QApplication app{argc, argv};
+    MainWindow win{ ctx, app };
+    std::println("Orgki or smth");
+
+    win.show();
+
+    return app.exec();
 #else
+    Logger::GetInstance()->LogToConsole(false);
+
+    std::string cmd{};
     auto screen= ftxui::App::Fullscreen();
     auto elms = ftxui::Container::Vertical({});
 
@@ -101,10 +108,11 @@ int main(int argc, char** argv) {
 
     bool showCommandLine = false;
     std::string cmdMsg{};
+    ftxui::Color cmdColor{};
     int cmdCurPos = 0;
     auto cmdLineConfig = ftxui::InputOption{
         .multiline = false,
-        .on_enter = [&screen, &cmd, &cmdMsg, &ctx] {
+        .on_enter = [&screen, &cmd, &cmdMsg, &ctx, &cmdColor] {
             auto status = ctx.parser.Parse(cmd);
             if (!status.has_value()) {
                 switch (status.error()) {
@@ -132,8 +140,10 @@ int main(int argc, char** argv) {
                     break;
                   break;
                 }
+                cmdColor = ftxui::Color::Red;
             }
             else {
+                cmdColor = ftxui::Color::Green;
                 cmdMsg = status.value().msg;
             }
 			cmd.erase();
@@ -210,7 +220,7 @@ int main(int argc, char** argv) {
                 ftxui::filler()
             };
             if (!cmdMsg.empty())
-                elms.emplace_back(ftxui::color(ftxui::Color::Red, ftxui::text(cmdMsg)));
+                elms.emplace_back(ftxui::color(cmdColor, ftxui::text(cmdMsg)));
             elms.emplace_back(ftxui::hbox({ ftxui::text(">> "), commandLineInput->Render() }));
 
             return ftxui::vbox(elms);
