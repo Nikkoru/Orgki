@@ -1,26 +1,29 @@
-﻿#include "libOrgki/Commands/Command.hpp"
-#include "libOrgki/Commands/Parser.hpp"
-#include "libOrgki/Context.hpp"
-#include "libOrgki/Settings/SettingsManager.hpp"
-#include "libOrgki/Logger.hpp"
-#include <filesystem>
+﻿#include <filesystem>
+#include <print>
+
+#include <lua.hpp>
+
+#ifdef ORGKI_TUI
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/component_base.hpp>
 #include <ftxui/component/component_options.hpp>
 #include <ftxui/component/event.hpp>
 #include <ftxui/component/loop.hpp>
 #include <ftxui/dom/elements.hpp>
-#include <print>
 #include <ftxui/ftxui.hpp>
-
-#include <lua.hpp>
-
-#ifdef ORGKI_GUI
+#elif defined(ORGKI_CLI) // ORGKI_TUI
+#include <string>
+#else // ORGKI_CLI
 #include <QApplication>
 #include "Orgki/MainWindow.hpp"
-#else
-#include <string>
 #endif
+
+
+#include "libOrgki/Commands/Command.hpp"
+#include "libOrgki/Commands/Parser.hpp"
+#include "libOrgki/Context.hpp"
+#include "libOrgki/Settings/SettingsManager.hpp"
+#include "libOrgki/Logger.hpp"
 
 int main(int argc, char** argv) {
     Logger::GetInstance()->SaveToLogFile("log.txt");
@@ -75,15 +78,7 @@ int main(int argc, char** argv) {
                 std::println("{}", status.value().msg);
         }
     }
-#elif defined(ORGKI_GUI)
-    QApplication app{argc, argv};
-    MainWindow win{ ctx, app };
-    std::println("Orgki or smth");
-
-    win.show();
-
-    return app.exec();
-#else
+#elif defined(ORGKI_TUI) // ORGKI_CLI
     Logger::GetInstance()->LogToConsole(false);
 
     std::string cmd{};
@@ -327,5 +322,13 @@ int main(int argc, char** argv) {
             depth++;
         }
     }
+#else // ORGKI_TUI
+    QApplication app{argc, argv};
+    MainWindow win{ ctx, app };
+    std::println("Orgki or smth");
+
+    win.show();
+
+    return app.exec();
 #endif
 }

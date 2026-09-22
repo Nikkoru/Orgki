@@ -28,6 +28,7 @@ By default the program builds as a GUI app, but you can build a CLI or a TUI wit
 
 ### Example building the TUI
 ```sh
-cmake .. -DORGKI_GUI=OFF -DORGKI_TUI=ON
+cmake .. -DORGKI_TUI=ON
 cmake --build .
 ```
+You can also use an IDE that supports CMake, like Visual Studio or CLion.

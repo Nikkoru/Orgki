@@ -54,7 +54,6 @@ public:
     ~MainWindow() override = default;
 
     void LoadSavedState(const std::filesystem::path& path);
-
 signals:
     void PlansUpdated();
 private:

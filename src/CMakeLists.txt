@@ -2,7 +2,7 @@
     "${PROJECT_SOURCE_DIR}/src/main.cpp"
 PARENT_SCOPE)
 
-if (ORGKI_GUI)
+if (NOT ORGKI_TUI AND NOT ORGKI_CLI)
     list(APPEND
        Orgki_SOURCES 
             "${PROJECT_SOURCE_DIR}/src/main.cpp"

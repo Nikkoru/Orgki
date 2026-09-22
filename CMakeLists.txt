@@ -13,17 +13,19 @@ project("Orgki")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
-
 set(ORGKI_HEADERS_DIR "${PROJECT_SOURCE_DIR}/include")
 
-option(ORGKI_CLI "builds a CLI instead of TUI" OFF)
-option(ORGKI_GUI "Builds a GUI app instead of TUI" ON)
+option(ORGKI_CLI "builds a CLI instead of GUI" OFF)
+option(ORGKI_TUI "Builds a TUI app instead of GUI" OFF)
 
-option(ORGKI_STATIC "Builds, with static linking instead of dynamic linking dependencies" ON)
+option(ORGKI_STATIC "Builds with static linking instead of dynamically linking dependencies" ON)
+
+if (NOT ORGKI_TUI AND NOT ORGKI_CLI)
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTOUIC ON)
+    set(CMAKE_AUTORCC ON)
+endif()
+
 
 add_subdirectory(externals)
 add_subdirectory(include)
@@ -35,7 +37,7 @@ add_executable(Orgki
     ${Orgki_HEADERS}
 )
 
-if (ORGKI_GUI)
+if (NOT ORGKI_TUI AND NOT ORGKI_CLI)
     if (WIN32)
         if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
             list(APPEND CMAKE_PREFIX_PATH $ENV{QT_MSVC})
@@ -55,8 +57,8 @@ set_target_properties(Orgki PROPERTIES
 
 if (ORGKI_CLI)
     target_compile_definitions(Orgki PRIVATE ORGKI_CLI)
-elseif(ORGKI_GUI)
-    target_compile_definitions(Orgki PRIVATE ORGKI_GUI)
+elseif(ORGKI_TUI)
+    target_compile_definitions(Orgki PRIVATE ORGKI_TUI)
 endif()
 
 if (ORGKI_STATIC)
@@ -68,7 +70,7 @@ if (ORGKI_STATIC)
     endif()
 endif()
 
-if(MSVC)
+if (MSVC)
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>")
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/utf-8>")
     add_compile_options("$<$<COMPILE_LANGUAGE:C>:/utf-8>")
@@ -81,13 +83,17 @@ endif()
 
 target_link_libraries(Orgki
     PRIVATE
-        ftxui::ftxui
         lua::lua
         Orgki::libOrgki
         # Orgki::libOrgkiNet
 )
 
-if (ORGKI_GUI)
+if (ORGKI_TUI)
+    target_link_libraries(Orgki
+        PRIVATE
+            ftxui::ftxui
+    )
+elseif (NOT ORGKI_CLI)
     target_link_libraries(Orgki
         PRIVATE
             Qt6::Gui
